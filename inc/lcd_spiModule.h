@@ -24,4 +24,7 @@ void lcd_send_string(char str[]);
 /**@brief Function for sending string, int, float, ... values to lcd. */
 void lcd_print(char const *ch, float value);
 
+/**@brief Function to clear end of line*/
+void lcd_clear_eol(void);
+
 #endif

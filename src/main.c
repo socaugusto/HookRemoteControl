@@ -38,11 +38,15 @@
 #include <zephyr/logging/log.h>
 
 #include "lcd_spiModule.h"
+#include "remote.h"
 
 #define LOG_MODULE_NAME central_uart
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
 /* UART payload buffer element size. */
+#define STACKSIZE 1024
+#define PRIORITY_BLE 5
+#define PRIORITY_UI 7
 #define UART_BUF_SIZE 20
 
 #define KEY_PASSKEY_ACCEPT DK_BTN1_MSK
@@ -619,6 +623,8 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 void button_changed(uint32_t button_state, uint32_t has_changed)
 {
 	uint32_t buttons = button_state & has_changed;
+
+	update_buttons(buttons);
 }
 
 static void configure_gpio(void)
@@ -730,22 +736,76 @@ int main(void)
 
 	for (;;)
 	{
+		k_sleep(K_MSEC(500));
+	}
+}
+
+void sendBLE(uint8_t *data, uint8_t len)
+{
+	k_sched_lock();
+	for (uint16_t pos = 0; pos != len;)
+	{
+		struct uart_data_t *tx = k_malloc(sizeof(*tx));
+
+		if (!tx)
+		{
+			LOG_WRN("Not able to allocate UART send data buffer");
+			return;
+		}
+
+		if ((len - pos) > sizeof(tx->data))
+		{
+			tx->len = sizeof(tx->data);
+		}
+		else
+		{
+			tx->len = (len - pos);
+		}
+
+		memcpy(tx->data, &data[pos], tx->len);
+
+		pos += tx->len;
+
+		k_fifo_put(&fifo_uart_rx_data, tx);
+	}
+	k_sched_unlock();
+}
+
+static void update_user_interface(void)
+{
+	for (;;)
+	{
+		update_ui();
+		k_sleep(K_MSEC(500));
+	}
+}
+
+static void ble_write_thread(void)
+{
+	for (;;)
+	{
+		uint8_t log = 1;
 		/* Wait indefinitely for data to be sent over Bluetooth */
 		struct uart_data_t *buf = k_fifo_get(&fifo_uart_rx_data,
 											 K_FOREVER);
 
-		err = bt_nus_client_send(&nus_client, buf->data, buf->len);
-		if (err)
+		if (bt_nus_client_send(&nus_client, buf->data, buf->len))
 		{
-			LOG_WRN("Failed to send data over BLE connection"
-					"(err %d)",
-					err);
+			LOG_WRN("Failed to send data over BLE connection");
 		}
 
-		err = k_sem_take(&nus_write_sem, NUS_WRITE_TIMEOUT);
-		if (err)
+		while (k_sem_take(&nus_write_sem, NUS_WRITE_TIMEOUT))
 		{
-			LOG_WRN("NUS send timeout");
+			if (log)
+			{
+				LOG_WRN("NUS send timeout");
+				log = 0;
+			}
 		}
 	}
 }
+
+K_THREAD_DEFINE(ble_thread_id, STACKSIZE, ble_write_thread, NULL, NULL, NULL, PRIORITY_BLE, 0, 0);
+
+K_THREAD_DEFINE(ui_thread_id, STACKSIZE, update_user_interface, NULL, NULL,
+				NULL, PRIORITY_UI, 0, 0);
