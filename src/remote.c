@@ -1,5 +1,6 @@
 #include "remote.h"
 #include "lcd_spiModule.h"
+#include "adt_cbuffer.h"
 
 #include <zephyr/logging/log.h>
 
@@ -14,6 +15,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define LF '\n'
 
 /**@brief structure for remote command data. */
+#pragma pack(1)
 typedef struct _hook_remote_cmd_t
 {
 
@@ -26,6 +28,7 @@ typedef struct _hook_remote_cmd_t
 } hook_remote_cmd_t;
 
 /**@brief structure for hook data. */
+#pragma pack(1)
 typedef struct _hook_data_t
 {
 
@@ -41,21 +44,82 @@ typedef struct _hook_data_t
 
 } hook_data_t;
 
+static uint8_t *stringError = "?    ";
+static uint8_t *stringUnknown = "UNKNOWN";
+static uint8_t *stringOpen = "OPEN";
+static uint8_t *stringMid = "MID";
+static uint8_t *stringClosed = "CLOSED";
+
+static hook_data_t hd;
+static Adt_CBuffer_t radio;
+#define BUFFER_SIZE 1024
+static uint8_t radioBuffer[BUFFER_SIZE];
+
 extern void sendBLE(uint8_t *data, uint8_t len);
+static void hook_data_get(const uint8_t *const data);
 
-void hook_remote_cmd_init(hook_remote_cmd_t *rcmd)
+void remote_init(void)
 {
-
-    rcmd->r_header[0] = HDR;
-    rcmd->r_header[1] = R_HDR;
-    rcmd->open_pos = 0;
-    rcmd->mid_pos = 0;
-    rcmd->close_pos = 0;
-    rcmd->cr = CR;
-    rcmd->lf = LF;
+    hd.lcd_hook_status = stringError;
+    adt_cbuffer_init(&radio, radioBuffer, sizeof(uint8_t), BUFFER_SIZE);
 }
 
-void hook_remote_send_cmd(hook_remote_cmd_t *rcmd)
+void comm_addToRadioBuffer(const uint8_t *const data, uint32_t length)
+{
+    adt_cbuffer_push(&radio, data, length);
+}
+
+static void hook_data_get(const uint8_t *const data)
+{
+    uint8_t v1; // Voltage value before point xx from xx.yy (V)
+    uint8_t v2; // Voltage value after point yy from xx.yy (V)
+    uint8_t c1; // Current value before point xx from xx.yy (A)
+    uint8_t c2; // Current value after point yy from xx.yy (A)
+
+    if (data[0] == HDR && data[1] == H_HDR)
+    {
+        // Voltage formatting
+        v1 = (uint8_t)data[2] - 48; // Convert data to int
+        v2 = (uint8_t)data[3] - 48; // Convert data to int
+
+        hd.batt_voltage_m = (float)((v1 * 100) + v2) / 100.0; // Battery voltage monitor value
+
+        // Current formatting
+        c1 = (uint8_t)data[4] - 48;
+        c2 = (uint8_t)data[5] - 48;
+
+        hd.load_current_m = (float)((c1 * 100) + c2) / 100.0; // Load current monitor value
+
+        // LED indicator formatting
+        hd.open_pos_led = (uint8_t)data[6] - 48;  // Open Pos LED indicator condition value
+        hd.mid_pos_led = (uint8_t)data[7] - 48;   // Mid Pos LED indicator condition value
+        hd.close_pos_led = (uint8_t)data[8] - 48; // Close Pos LED indicator condition value
+        hd.fault_led = (uint8_t)data[9] - 48;     // Fault LED indicator condition value
+    }
+
+    if (hd.open_pos_led == 2 && hd.mid_pos_led == 2 && hd.close_pos_led == 2)
+    {
+        hd.lcd_hook_status = stringUnknown;
+    }
+    else if (hd.open_pos_led == 1 && hd.mid_pos_led == 0 && hd.close_pos_led == 0)
+    {
+        hd.lcd_hook_status = stringOpen;
+    }
+    else if (hd.open_pos_led == 0 && hd.mid_pos_led == 1 && hd.close_pos_led == 0)
+    {
+        hd.lcd_hook_status = stringMid;
+    }
+    else if (hd.open_pos_led == 0 && hd.mid_pos_led == 0 && hd.close_pos_led == 1)
+    {
+        hd.lcd_hook_status = stringClosed;
+    }
+    else
+    {
+        hd.lcd_hook_status = stringError;
+    }
+}
+
+static void hook_remote_send_cmd(hook_remote_cmd_t *rcmd)
 {
     uint8_t rdata[7];
 
@@ -72,7 +136,7 @@ void hook_remote_send_cmd(hook_remote_cmd_t *rcmd)
     sendBLE(rdata, sizeof(rdata));
 }
 
-void update_buttons(uint32_t button)
+void remote_updateButtons(uint32_t button)
 {
     hook_remote_cmd_t cmd;
     cmd.r_header[0] = HDR;
@@ -98,19 +162,31 @@ void update_buttons(uint32_t button)
     hook_remote_send_cmd(&cmd);
 }
 
-void update_ui(void)
+#define SIZE_OF_HOOK_DATA 12
+void remote_process(void)
+{
+
+    while (adt_cbuffer_getLength(&radio) >= SIZE_OF_HOOK_DATA)
+    {
+        uint8_t data[SIZE_OF_HOOK_DATA];
+        adt_cbuffer_poll(&radio, data, SIZE_OF_HOOK_DATA);
+        hook_data_get(data);
+    }
+}
+
+void remote_updateUi(void)
 {
     lcd_set_cursor(1, 1);
-    lcd_print(">Batt(V):%0.2f", 23.25f);
+    lcd_print(">Batt(V):%0.2f", hd.batt_voltage_m);
     lcd_clear_eol();
     lcd_set_cursor(2, 1);
-    lcd_print(">Load(A):%0.2f", 1.25f);
+    lcd_print(">Load(A):%0.2f", hd.load_current_m);
     lcd_clear_eol();
     lcd_set_cursor(3, 1);
     lcd_send_string(">HookPos:");
-    lcd_send_string("Unknown");
+    lcd_send_string(hd.lcd_hook_status);
     lcd_clear_eol();
     lcd_set_cursor(4, 1);
-    lcd_print(">RSSI(dBm):%.0f", -25);
+    lcd_print(">RSSI(dBm):%.0f", 0);
     lcd_clear_eol();
 }

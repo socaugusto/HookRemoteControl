@@ -103,49 +103,8 @@ static uint8_t ble_data_received(struct bt_nus_client *nus,
 {
 	ARG_UNUSED(nus);
 
-	int err;
-
-	for (uint16_t pos = 0; pos != len;)
-	{
-		struct uart_data_t *tx = k_malloc(sizeof(*tx));
-
-		if (!tx)
-		{
-			LOG_WRN("Not able to allocate UART send data buffer");
-			return BT_GATT_ITER_CONTINUE;
-		}
-
-		/* Keep the last byte of TX buffer for potential LF char. */
-		size_t tx_data_size = sizeof(tx->data) - 1;
-
-		if ((len - pos) > tx_data_size)
-		{
-			tx->len = tx_data_size;
-		}
-		else
-		{
-			tx->len = (len - pos);
-		}
-
-		memcpy(tx->data, &data[pos], tx->len);
-
-		pos += tx->len;
-
-		/* Append the LF character when the CR character triggered
-		 * transmission from the peer.
-		 */
-		if ((pos == len) && (data[len - 1] == '\r'))
-		{
-			tx->data[tx->len] = '\n';
-			tx->len++;
-		}
-
-		err = uart_tx(uart, tx->data, tx->len, SYS_FOREVER_MS);
-		if (err)
-		{
-			k_fifo_put(&fifo_uart_tx_data, tx);
-		}
-	}
+	LOG_INF("%s", data);
+	comm_addToRadioBuffer(data, len);
 
 	return BT_GATT_ITER_CONTINUE;
 }
@@ -624,7 +583,7 @@ void button_changed(uint32_t button_state, uint32_t has_changed)
 {
 	uint32_t buttons = button_state & has_changed;
 
-	update_buttons(buttons);
+	remote_updateButtons(buttons);
 }
 
 static void configure_gpio(void)
@@ -674,6 +633,8 @@ int main(void)
 	configure_spi();
 
 	lcd_init(lcd, &lcdcs);
+
+	remote_init();
 
 	err = bt_conn_auth_cb_register(&conn_auth_callbacks);
 	if (err)
@@ -736,7 +697,8 @@ int main(void)
 
 	for (;;)
 	{
-		k_sleep(K_MSEC(500));
+		remote_process();
+		k_sleep(K_MSEC(250));
 	}
 }
 
@@ -775,7 +737,7 @@ static void update_user_interface(void)
 {
 	for (;;)
 	{
-		update_ui();
+		remote_updateUi();
 		k_sleep(K_MSEC(500));
 	}
 }

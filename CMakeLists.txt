@@ -13,6 +13,7 @@ target_sources(app PRIVATE
   src/main.c
   src/lcd_spiModule.c
   src/remote.c
+  src/adt_cbuffer.c
 )
 
 target_include_directories(app
