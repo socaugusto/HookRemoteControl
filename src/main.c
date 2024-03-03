@@ -37,6 +37,8 @@
 
 #include <zephyr/logging/log.h>
 
+#include "lcd_spiModule.h"
+
 #define LOG_MODULE_NAME central_uart
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
@@ -52,13 +54,6 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
 static const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 static struct k_work_delayable uart_work;
-
-static struct spi_config spi_cfg = {
-	.frequency = 125000U,
-	.operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_LSB | SPI_WORD_SET(8),
-	.slave = 0,
-	.cs = 0,
-};
 
 static const struct device *lcd = DEVICE_DT_GET(DT_NODELABEL(lcd_spi));
 
@@ -653,6 +648,7 @@ static int configure_spi(void)
 		LOG_ERR("Cannot configure LCD CS gpio");
 		return -ENODEV;
 	}
+	gpio_pin_set_dt(&lcdcs, 0);
 
 	if (!device_is_ready(lcd))
 	{
@@ -670,6 +666,8 @@ int main(void)
 	configure_gpio();
 
 	configure_spi();
+
+	lcd_init(lcd, &lcdcs);
 
 	err = bt_conn_auth_cb_register(&conn_auth_callbacks);
 	if (err)
