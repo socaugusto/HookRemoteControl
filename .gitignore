@@ -1,6 +1,7 @@
 # editors
 *.swp
 *~
+*.json
 
 # build
 /build*/
