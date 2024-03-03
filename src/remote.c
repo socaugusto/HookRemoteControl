@@ -1,11 +1,14 @@
 #include "remote.h"
 #include "lcd_spiModule.h"
 #include "adt_cbuffer.h"
+#include "dk_buttons_and_leds.h"
 
 #include <zephyr/logging/log.h>
 
 #define LOG_MODULE_NAME remote
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
+
+#define FAULT_LED 8
 
 // Headers
 #define HDR '$'
@@ -189,4 +192,13 @@ void remote_updateUi(void)
     lcd_set_cursor(4, 1);
     lcd_print(">RSSI(dBm):%.0f", 0);
     lcd_clear_eol();
+
+    if (hd.fault_led)
+    {
+        dk_set_led_on(FAULT_LED);
+    }
+    else
+    {
+        dk_set_led_off(FAULT_LED);
+    }
 }
