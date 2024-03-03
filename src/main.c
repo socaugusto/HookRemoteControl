@@ -32,6 +32,9 @@
 
 #include <zephyr/drivers/uart.h>
 
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/spi.h>
+
 #include <zephyr/logging/log.h>
 
 #define LOG_MODULE_NAME central_uart
@@ -49,6 +52,18 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
 static const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 static struct k_work_delayable uart_work;
+
+static struct spi_config spi_cfg = {
+	.frequency = 125000U,
+	.operation = SPI_OP_MODE_MASTER | SPI_TRANSFER_LSB | SPI_WORD_SET(8),
+	.slave = 0,
+	.cs = 0,
+};
+
+static const struct device *lcd = DEVICE_DT_GET(DT_NODELABEL(lcd_spi));
+
+static const struct gpio_dt_spec lcdcs = GPIO_DT_SPEC_GET(DT_NODELABEL(lcdcs),
+														  gpios);
 
 K_SEM_DEFINE(nus_write_sem, 0, 1);
 
@@ -628,11 +643,33 @@ static void configure_gpio(void)
 	}
 }
 
+static int configure_spi(void)
+{
+	int err;
+
+	err = gpio_pin_configure_dt(&lcdcs, GPIO_OUTPUT);
+	if (err)
+	{
+		LOG_ERR("Cannot configure LCD CS gpio");
+		return -ENODEV;
+	}
+
+	if (!device_is_ready(lcd))
+	{
+		LOG_ERR("SPI not initialized");
+		return -ENODEV;
+	}
+
+	return 0;
+}
+
 int main(void)
 {
 	int err;
 
 	configure_gpio();
+
+	configure_spi();
 
 	err = bt_conn_auth_cb_register(&conn_auth_callbacks);
 	if (err)

@@ -22,10 +22,10 @@
     status = "disabled";
 };
 
-&arduino_spi {
-    status = "disabled";
+lcd_spi: &spi3 {
+    status = "okay";
+    /delete-property/ cs-gpios;
 };
-
 
 
 /{
@@ -112,5 +112,12 @@
         };
     };
 
+    spi_cs {
+        compatible = "gpio-leds";
+        lcdcs: lcd_cs {
+            gpios = <&gpio1 12 GPIO_ACTIVE_LOW>;
+            label = "LCD chip select";
+        };
+    };
 };
 
