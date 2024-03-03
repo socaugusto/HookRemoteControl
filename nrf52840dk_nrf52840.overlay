@@ -22,6 +22,11 @@
     status = "disabled";
 };
 
+&arduino_spi {
+    status = "disabled";
+};
+
+
 
 /{
     buttons {
@@ -60,6 +65,50 @@
             gpios = <&gpio1 8 (GPIO_ACTIVE_LOW)>;
             label = "Push button switch 6";
             zephyr,code = <INPUT_KEY_6>;
+        };
+    };
+
+    leds {
+        compatible = "gpio-leds";
+        led0: led_0 {
+            gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
+            label = "Green LED 0";
+        };
+        led1: led_1 {
+            gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+            label = "Green LED 1";
+        };
+        led2: led_2 {
+            gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+            label = "Green LED 2";
+        };
+        led3: led_3 {
+            gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+            label = "Green LED 3";
+        };
+        led4: led_4 {
+            gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+            label = "Green LED 4";
+        };
+        led5: led_5 {
+            gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+            label = "Green LED 5";
+        };
+        led6: led_6 {
+            gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+            label = "Green LED 6";
+        };
+        led7: led_7 {
+            gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+            label = "Yellow LED 7";
+        };
+        led8: led_8 {
+            gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
+            label = "Red LED 8";
+        };
+        led9: led_9 {
+            gpios = <&gpio1 11 GPIO_ACTIVE_HIGH>;
+            label = "Yellow LED 9";
         };
     };
 
