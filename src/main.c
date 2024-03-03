@@ -56,6 +56,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define UART_WAIT_FOR_BUF_DELAY K_MSEC(50)
 #define UART_RX_TIMEOUT 50
 
+#define CON_STATUS_LED 7
+
 static const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 static struct k_work_delayable uart_work;
 
@@ -394,6 +396,7 @@ static void connected(struct bt_conn *conn, uint8_t conn_err)
 		return;
 	}
 
+	dk_set_led_on(CON_STATUS_LED);
 	LOG_INF("Connected: %s", addr);
 
 	static struct bt_gatt_exchange_params exchange_params;
@@ -428,6 +431,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
 	LOG_INF("Disconnected: %s (reason %u)", addr, reason);
+	dk_set_led_off(CON_STATUS_LED);
 
 	if (default_conn != conn)
 	{
@@ -684,7 +688,8 @@ int main(void)
 		return 0;
 	}
 
-	printk("Starting Bluetooth Central UART example\n");
+	printk("**STAVENG TRANSFERA** \n");
+	printk("-- Searching for slaves... \n");
 
 	err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
 	if (err)
