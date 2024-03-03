@@ -12,6 +12,7 @@ project(central_uart)
 target_sources(app PRIVATE
   src/main.c
   src/lcd_spiModule.c
+  src/remote.c
 )
 
 target_include_directories(app
