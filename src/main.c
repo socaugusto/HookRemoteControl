@@ -105,7 +105,14 @@ static uint8_t ble_data_received(struct bt_nus_client *nus,
 {
 	ARG_UNUSED(nus);
 
-	LOG_INF("%s", data);
+	if (len == 12)
+	{
+		LOG_INF("%.10s", data);
+	}
+	else
+	{
+		LOG_INF("%s", data);
+	}
 	comm_addToRadioBuffer(data, len);
 
 	return BT_GATT_ITER_CONTINUE;
