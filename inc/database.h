@@ -27,6 +27,8 @@ void database_run(void);
 
 int16_t database_getHomingSpeed(void);
 bool database_setHomingSpeed(int16_t);
+int16_t database_getClosingSpeed(void);
+bool database_setClosingSpeed(int16_t);
 
 uint16_t database_convertTargetToValue(HookTarget_e);
 HookState_e database_getState(void);

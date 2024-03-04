@@ -14,13 +14,14 @@ void system_init(const void *lcd_dev, const void *cs_dev)
 
 void system_thread(void)
 {
+    remote_run();
     database_run();
     command_run();
 }
 
-void system_updateButtons(uint32_t buttons)
+void system_updateButtons(uint32_t button_state, uint32_t has_changed)
 {
-    remote_updateButtons(buttons);
+    remote_updateButtons(button_state, has_changed);
 }
 
 void system_receiveUpdate(const uint8_t *data, uint32_t length)

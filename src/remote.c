@@ -1,8 +1,8 @@
 #include "remote.h"
 #include "lcd_spiModule.h"
-#include "adt_cbuffer.h"
 #include "dk_buttons_and_leds.h"
 #include "database.h"
+#include "commands.h"
 
 #include <zephyr/logging/log.h>
 
@@ -12,41 +12,93 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define FAULT_LED 8
 
 static uint8_t *stringError = "?    ";
-// static uint8_t *stringUnknown = "UNKNOWN";
-// static uint8_t *stringOpen = "OPEN";
-// static uint8_t *stringMid = "MID";
-// static uint8_t *stringClosed = "CLOSED";
+static uint8_t *stringUnknown = "UNKNOWN";
+static uint8_t *stringOpen = "OPEN";
+static uint8_t *stringMid = "MID";
+static uint8_t *stringClosed = "CLOSED";
 
 static uint8_t *positionString = NULL;
 static uint8_t faultLed = 0;
+static uint32_t buttonsPressed = 0;
+static uint32_t closeButton = 0;
+static uint32_t midButton = 0;
+static uint32_t openButton = 0;
 
 void remote_init(void)
 {
     positionString = stringError;
 }
 
-void remote_updateButtons(uint32_t button)
+void remote_updateButtons(uint32_t button_state, uint32_t has_changed)
 {
+    buttonsPressed = button_state;
 
-    if (button == 16)
+    // Buttons is released
+    if (!(button_state & 16) && (has_changed & 16))
     {
-        // cmd.close_pos = 1;
+        // If filter is big enough
+        if (closeButton > 20)
+        {
+            CommandInput_t cmd = {.operation = COMMAND_HOOK_CLOSE};
+            command_addToBuffer(&cmd);
+        }
+        closeButton = 0;
     }
-    else if (button == 32)
+    LOG_INF("Buttons pressed: %d", button_state);
+}
+
+void remote_run(void)
+{
+    if (buttonsPressed & 16)
     {
-        // cmd.mid_pos = 1;
+        ++closeButton;
     }
-    else if (button == 64)
+    if (buttonsPressed & 32)
     {
-        // cmd.open_pos = 1;
+        ++midButton;
     }
-    // hook_remote_send_cmd(&cmd);
+    if (buttonsPressed & 64)
+    {
+        ++openButton;
+    }
 }
 
 void remote_updateUi(void)
 {
     float voltage = ((float)database_getVoltage() / 1000.0f);
     float current = ((float)database_getCurrent() / 1000.0f);
+
+    switch (database_getState())
+    {
+    case HOOK_STATE_UNINITIALIZED:
+        positionString = stringUnknown;
+        break;
+    case HOOK_STATE_CLOSED:
+        positionString = stringClosed;
+
+        break;
+    case HOOK_STATE_PARTIALLY_CLOSED:
+        positionString = stringMid;
+
+        break;
+    case HOOK_STATE_MID:
+        positionString = stringMid;
+
+        break;
+    case HOOK_STATE_PARTIALLY_OPEN:
+        positionString = stringMid;
+
+        break;
+    case HOOK_STATE_OPEN:
+        positionString = stringOpen;
+
+        break;
+    default:
+    case HOOK_STATE_ERROR:
+        positionString = stringError;
+
+        break;
+    }
 
     lcd_set_cursor(1, 1);
     lcd_print(">Batt(V):%0.2f", voltage);

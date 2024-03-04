@@ -14,7 +14,6 @@ static int32_t cmdCount = 0;
 static CommandInput_t *cmd = NULL;
 static CommandObject_t cmdObject;
 
-static Command_e decode(const CommandInput_t *cmd);
 static CommandInput_t *process(CommandInput_t *cmd, CommandState_e state);
 
 void command_addToBuffer(CommandInput_t *cmd)
@@ -39,9 +38,6 @@ void command_run(void)
         cmd = &cmdBuffer[cmdIdxUse];
         cmdIdxUse = (cmdIdxUse + 1) % MAX_NUMBER_OF_COMMANDS;
         --cmdCount;
-
-        cmd->operation = decode(cmd);
-        memset(&cmdObject, 0x00, sizeof(cmdObject));
 
         switch (cmd->operation)
         {
@@ -70,7 +66,8 @@ void command_run(void)
 
             break;
         case COMMAND_HOOK_CLOSE:
-            cmd = NULL;
+            cmdObject.operation = cmd->operation;
+            cmdObject.task = executeCmdClose;
 
             break;
         case COMMAND_HOOK_MID:
@@ -91,38 +88,6 @@ void command_run(void)
     {
         cmd = process(cmd, cmdObject.task(&cmdObject));
     }
-}
-
-static Command_e decode(const CommandInput_t *cmd)
-{
-    Command_e result = COMMAND_NONE;
-
-    if (cmd->open == 2 && cmd->mid == 2 && cmd->close == 0)
-    {
-        result = COMMAND_HOMING;
-    }
-    else if (cmd->open == 3 && cmd->mid == 0 && cmd->close == 3)
-    {
-        result = COMMAND_SYSTEM_RESET;
-    }
-    else if (cmd->open == 0 && cmd->mid == 4 && cmd->close == 4)
-    {
-        result = COMMAND_EACK;
-    }
-    else if (cmd->open == 0 && cmd->mid == 0 && cmd->close == 1)
-    {
-        result = COMMAND_HOOK_CLOSE;
-    }
-    else if (cmd->open == 0 && cmd->mid == 1 && cmd->close == 0)
-    {
-        result = COMMAND_HOOK_MID;
-    }
-    else if (cmd->open == 1 && cmd->mid == 0 && cmd->close == 0)
-    {
-        result = COMMAND_HOOK_OPEN;
-    }
-
-    return result;
 }
 
 static CommandInput_t *process(CommandInput_t *cmd, CommandState_e state)

@@ -26,10 +26,10 @@ typedef enum CommandState_e_
 } CommandState_e;
 typedef struct CommandInput_t_
 {
-    int32_t open;
-    int32_t close;
-    int32_t mid;
     Command_e operation;
+    int32_t parameter1;
+    int32_t parameter2;
+    int32_t parameter3;
 } CommandInput_t;
 
 typedef struct CommandObject_t_
@@ -46,5 +46,6 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *);
 CommandState_e executeCmdTaskEack(CommandObject_t *);
 CommandState_e executeCmdTaskStop(CommandObject_t *);
 CommandState_e executeCmdTaskReboot(CommandObject_t *);
+CommandState_e executeCmdClose(CommandObject_t *);
 
 #endif

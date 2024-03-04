@@ -132,3 +132,40 @@ CommandState_e executeCmdTaskReboot(CommandObject_t *cmdObject)
 
     return cmdObject->state;
 }
+
+CommandState_e executeCmdClose(CommandObject_t *cmdObject)
+{
+    switch (cmdObject->state)
+    {
+    case COMMAND_STATE_START:
+        cmdObject->state = COMMAND_STATE_ACTION;
+
+        break;
+    case COMMAND_STATE_SETUP:
+
+        break;
+    case COMMAND_STATE_ACTION:
+        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_CLOSED), database_getClosingSpeed(), MC_MODE_CONSTANT_SPEED);
+        cmdObject->state = COMMAND_STATE_END;
+
+        break;
+    case COMMAND_STATE_TEARDOWN:
+
+        break;
+    case COMMAND_STATE_END:
+        if (database_getState() == HOOK_STATE_CLOSED)
+        {
+            cmdObject->state = COMMAND_STATE_FINISH;
+        }
+
+        cmdObject->state = COMMAND_STATE_FINISH; // TEMPORARY
+
+        break;
+    case COMMAND_STATE_FINISH:
+    default:
+
+        break;
+    }
+
+    return cmdObject->state;
+}

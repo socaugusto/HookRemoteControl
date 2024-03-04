@@ -590,18 +590,11 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 	.pairing_complete = pairing_complete,
 	.pairing_failed = pairing_failed};
 
-void button_changed(uint32_t button_state, uint32_t has_changed)
-{
-	uint32_t buttons = button_state & has_changed;
-
-	system_updateButtons(buttons);
-}
-
 static void configure_gpio(void)
 {
 	int err;
 
-	err = dk_buttons_init(button_changed);
+	err = dk_buttons_init(system_updateButtons);
 	if (err)
 	{
 		LOG_ERR("Cannot init buttons (err: %d)", err);

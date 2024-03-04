@@ -55,6 +55,7 @@ static Errors_e errorNo = ERROR_NONE;
 static uint8_t sequenceNumber = 0;
 
 static int16_t hommingSpeed = HOOK_HOMING_DIRECTION * 750;
+static int16_t closingSpeed = HOOK_CLOSING_DIRECITON * 1200;
 
 static uint16_t homingPosition = 0;
 static uint16_t closedPosition = 1;
@@ -141,6 +142,17 @@ int16_t database_getHomingSpeed(void)
 bool database_setHomingSpeed(int16_t speed)
 {
     hommingSpeed = speed;
+    return false;
+}
+
+int16_t database_getClosingSpeed(void)
+{
+    return closingSpeed;
+}
+
+bool database_setClosingSpeed(int16_t speed)
+{
+    closingSpeed = speed;
     return false;
 }
 
