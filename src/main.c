@@ -37,8 +37,7 @@
 
 #include <zephyr/logging/log.h>
 
-#include "lcd_spiModule.h"
-#include "remote.h"
+#include "system.h"
 
 #define LOG_MODULE_NAME central_uart
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
@@ -66,7 +65,8 @@ static const struct device *lcd = DEVICE_DT_GET(DT_NODELABEL(lcd_spi));
 static const struct gpio_dt_spec lcdcs = GPIO_DT_SPEC_GET(DT_NODELABEL(lcdcs),
 														  gpios);
 
-K_SEM_DEFINE(nus_write_sem, 0, 1);
+static K_SEM_DEFINE(nus_write_sem, 0, 1);
+static K_SEM_DEFINE(lcd_ini_ok, 0, 1);
 
 struct uart_data_t
 {
@@ -113,7 +113,7 @@ static uint8_t ble_data_received(struct bt_nus_client *nus,
 	{
 		LOG_INF("%s", data);
 	}
-	comm_addToRadioBuffer(data, len);
+	system_receiveUpdate(data, len);
 
 	return BT_GATT_ITER_CONTINUE;
 }
@@ -594,7 +594,7 @@ void button_changed(uint32_t button_state, uint32_t has_changed)
 {
 	uint32_t buttons = button_state & has_changed;
 
-	remote_updateButtons(buttons);
+	system_updateButtons(buttons);
 }
 
 static void configure_gpio(void)
@@ -642,10 +642,6 @@ int main(void)
 	configure_gpio();
 
 	configure_spi();
-
-	lcd_init(lcd, &lcdcs);
-
-	remote_init();
 
 	err = bt_conn_auth_cb_register(&conn_auth_callbacks);
 	if (err)
@@ -707,16 +703,18 @@ int main(void)
 
 	LOG_INF("Scanning successfully started");
 
+	system_init(lcd, &lcdcs);
+	k_sem_give(&lcd_ini_ok);
+
 	for (;;)
 	{
-		remote_process();
-		k_sleep(K_MSEC(250));
+		system_thread();
+		k_sleep(K_MSEC(25));
 	}
 }
 
 void sendBLE(uint8_t *data, uint8_t len)
 {
-	k_sched_lock();
 	for (uint16_t pos = 0; pos != len;)
 	{
 		struct uart_data_t *tx = k_malloc(sizeof(*tx));
@@ -742,14 +740,15 @@ void sendBLE(uint8_t *data, uint8_t len)
 
 		k_fifo_put(&fifo_uart_rx_data, tx);
 	}
-	k_sched_unlock();
 }
 
 static void update_user_interface(void)
 {
+	k_sem_take(&lcd_ini_ok, K_FOREVER);
+
 	for (;;)
 	{
-		remote_updateUi();
+		system_updateUi();
 		k_sleep(K_MSEC(500));
 	}
 }

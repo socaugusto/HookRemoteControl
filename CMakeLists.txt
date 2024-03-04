@@ -11,6 +11,7 @@ project(central_uart)
 # NORDIC SDK APP START
 target_sources(app PRIVATE
   src/main.c
+  src/system.c
   src/lcd_spiModule.c
   src/remote.c
   src/adt_cbuffer.c
