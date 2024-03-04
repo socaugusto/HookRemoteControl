@@ -3,6 +3,7 @@
 #include "lcd_spiModule.h"
 #include "communications.h"
 #include "database.h"
+#include "commands.h"
 
 void system_init(const void *lcd_dev, const void *cs_dev)
 {
@@ -14,8 +15,7 @@ void system_init(const void *lcd_dev, const void *cs_dev)
 void system_thread(void)
 {
     database_run();
-    // command_run();
-    // radio_run();
+    command_run();
 }
 
 void system_updateButtons(uint32_t buttons)

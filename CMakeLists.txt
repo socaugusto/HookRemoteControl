@@ -14,6 +14,9 @@ target_sources(app PRIVATE
   src/system.c
   src/communications.c
   src/database.c
+  src/spin3204_control.c
+  src/commands.c
+  src/commands_tasks.c
   src/lcd_spiModule.c
   src/remote.c
   src/adt_cbuffer.c
