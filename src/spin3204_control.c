@@ -15,6 +15,7 @@ typedef enum Command_e_
     SPIN_COMMAND_REBOOT,
     SPIN_COMMAND_SET_PARAMETER,
     SPIN_COMMAND_READ_PARAMETER,
+    SPIN_COMMAND_READY_FOR_LOADING,
 } Command_e;
 
 #pragma pack(1)
