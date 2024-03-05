@@ -53,6 +53,9 @@ static uint16_t voltage = 0;
 static int16_t current = 0;
 static Errors_e errorNo = ERROR_NONE;
 static uint8_t sequenceNumber = 0;
+static uint8_t source = 0;
+static uint8_t id;
+static uint8_t data[4];
 
 static int16_t hommingSpeed = HOOK_HOMING_DIRECTION * 750;
 static int16_t closingSpeed = HOOK_CLOSING_DIRECITON * 1200;
@@ -66,8 +69,7 @@ void database_run(void)
 {
     uint32_t count = comm_getAvailableMotorDataLength();
     HookReply_t reply;
-    uint8_t id;
-    uint8_t data[4];
+
     if (count >= sizeof(HookReply_t))
     {
         if (0xFE == comm_peekFromMotorBuffer())
@@ -79,9 +81,14 @@ void database_run(void)
             current = reply.data.current;
             errorNo = reply.data.error;
             sequenceNumber = reply.data.command.sequenceNumber;
+            source = reply.data.command.dataType;
 
-            switch (reply.data.command.dataType)
+            switch (source)
             {
+            case 1:
+                id = reply.data.command.dataNumber;
+                memcpy(data, reply.data.dataValues, sizeof(data));
+
             case 0:
             default:
                 id = reply.data.command.dataNumber;
@@ -196,4 +203,9 @@ uint16_t database_getVoltage(void)
 uint8_t database_getError(void)
 {
     return errorNo;
+}
+
+DataSource_e database_getSource(void)
+{
+    return source;
 }

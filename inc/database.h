@@ -23,6 +23,12 @@ typedef enum HookTarget_e_
     HOOK_TARGET_OPEN,
 } HookTarget_e;
 
+typedef enum DataSource_e_
+{
+    SOURCE_SPIN3204 = 0,
+    SOURCE_LOADMASTER = 1,
+} DataSource_e;
+
 void database_run(void);
 
 int16_t database_getHomingSpeed(void);
@@ -36,5 +42,6 @@ HookState_e database_getState(void);
 int16_t database_getCurrent(void);
 uint16_t database_getVoltage(void);
 uint8_t database_getError(void);
+DataSource_e database_getSource(void);
 
 #endif

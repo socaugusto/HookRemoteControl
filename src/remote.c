@@ -113,9 +113,18 @@ void remote_updateUi(void)
     lcd_print(">Load(A):%0.2f", current);
     lcd_clear_eol();
     lcd_set_cursor(3, 1);
-    lcd_send_string(">HookPos:");
-    lcd_send_string(positionString);
-    lcd_clear_eol();
+
+    if (database_getSource() == SOURCE_SPIN3204)
+    {
+        lcd_send_string(">HookPos:");
+        lcd_send_string(positionString);
+        lcd_clear_eol();
+    }
+    else
+    {
+        lcd_send_string(">READY FOR LOADING");
+        lcd_clear_eol();
+    }
     lcd_set_cursor(4, 1);
     lcd_print(">RSSI(dBm):%.0f", rssiValue);
     lcd_clear_eol();
