@@ -2,6 +2,11 @@
 #include "communications.h"
 #include <memory.h>
 
+#include <zephyr/logging/log.h>
+
+#define LOG_MODULE_NAME database
+LOG_MODULE_REGISTER(LOG_MODULE_NAME);
+
 #pragma pack(1)
 typedef struct stdReply_t_
 {
@@ -19,6 +24,8 @@ typedef struct stdReply_t_
 
 } stdReply_t;
 
+#define SIZE_OF_STDREPLY sizeof(stdReply_t)
+
 #pragma pack(1)
 typedef struct HookReply_t_
 {
@@ -27,6 +34,8 @@ typedef struct HookReply_t_
     stdReply_t data;
     uint16_t checksum;
 } HookReply_t;
+
+#define SIZE_OF_HOOKREPLY sizeof(HookReply_t)
 
 typedef enum MotorDirection_e_
 {
@@ -70,11 +79,12 @@ void database_run(void)
     uint32_t count = comm_getAvailableMotorDataLength();
     HookReply_t reply;
 
-    if (count >= sizeof(HookReply_t))
+    while (count >= sizeof(HookReply_t))
     {
         if (0xFE == comm_peekFromMotorBuffer())
         {
             comm_removeFromMotorBuffer((uint8_t *)&reply, sizeof(HookReply_t));
+            count -= sizeof(HookReply_t);
 
             hookPosition = reply.data.position;
             voltage = reply.data.voltage;
@@ -101,6 +111,7 @@ void database_run(void)
         {
             uint8_t discard;
             comm_removeFromMotorBuffer(&discard, 1);
+            --count;
         }
     }
 }
