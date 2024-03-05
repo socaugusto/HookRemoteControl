@@ -23,6 +23,7 @@ static uint32_t buttonsPressed = 0;
 static uint32_t closeButton = 0;
 static uint32_t midButton = 0;
 static uint32_t openButton = 0;
+static int32_t rssiValue = 0;
 
 void remote_init(void)
 {
@@ -61,6 +62,11 @@ void remote_run(void)
     {
         ++openButton;
     }
+}
+
+void remote_setRssi(int8_t rssi)
+{
+    rssiValue = rssi;
 }
 
 void remote_updateUi(void)
@@ -111,7 +117,7 @@ void remote_updateUi(void)
     lcd_send_string(positionString);
     lcd_clear_eol();
     lcd_set_cursor(4, 1);
-    lcd_print(">RSSI(dBm):%.0f", 0);
+    lcd_print(">RSSI(dBm):%.0f", rssiValue);
     lcd_clear_eol();
 
     if (faultLed)

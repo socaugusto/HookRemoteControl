@@ -26,6 +26,9 @@
 #include <bluetooth/gatt_dm.h>
 #include <bluetooth/scan.h>
 
+#include <sdc_hci_vs.h>
+#include <sdc_hci_cmd_status_params.h>
+
 #include <dk_buttons_and_leds.h>
 
 #include <zephyr/settings/settings.h>
@@ -46,6 +49,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define STACKSIZE 1024
 #define PRIORITY_BLE 5
 #define PRIORITY_UI 7
+#define PRIORITY_RSSI 13
 #define UART_BUF_SIZE 20
 
 #define KEY_PASSKEY_ACCEPT DK_BTN1_MSK
@@ -107,11 +111,11 @@ static uint8_t ble_data_received(struct bt_nus_client *nus,
 
 	if (len == 12)
 	{
-		LOG_INF("%.10s", data);
+		LOG_DBG("%.10s", data);
 	}
 	else
 	{
-		LOG_INF("%s", data);
+		LOG_DBG("%s", data);
 	}
 	system_receiveUpdate(data, len);
 
@@ -771,7 +775,33 @@ static void ble_write_thread(void)
 	}
 }
 
+void ble_rssi_thread(void)
+{
+	uint16_t conn_handle = 0;
+	bt_hci_get_conn_handle(default_conn, &conn_handle);
+	sdc_hci_cmd_sp_read_rssi_t p_param = {conn_handle};
+
+	for (;;)
+	{
+		sdc_hci_cmd_sp_read_rssi_return_t p_return = {conn_handle, 0};
+		uint8_t err = sdc_hci_cmd_sp_read_rssi(&p_param, &p_return);
+		if (err)
+		{
+			LOG_WRN("Error %d Reading RSSI", err);
+		}
+		else
+		{
+			system_setRssi(p_return.rssi);
+		}
+
+		k_sleep(K_MSEC(1000));
+	}
+}
+
 K_THREAD_DEFINE(ble_thread_id, STACKSIZE, ble_write_thread, NULL, NULL, NULL, PRIORITY_BLE, 0, 0);
 
 K_THREAD_DEFINE(ui_thread_id, STACKSIZE, update_user_interface, NULL, NULL,
 				NULL, PRIORITY_UI, 0, 0);
+
+K_THREAD_DEFINE(ble_rssi_thread_id, STACKSIZE, ble_rssi_thread, NULL, NULL,
+				NULL, PRIORITY_RSSI, 0, 0);

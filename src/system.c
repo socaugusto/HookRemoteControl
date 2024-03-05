@@ -33,3 +33,8 @@ void system_updateUi(void)
 {
     remote_updateUi();
 }
+
+void system_setRssi(int8_t rssi)
+{
+    remote_setRssi(rssi);
+}
