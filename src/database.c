@@ -74,6 +74,8 @@ static uint16_t closedPosition = 1;
 static uint16_t midPosition = 5000;
 static uint16_t openPosition = 13200;
 
+static uint32_t readyForLiftingTimer = 0;
+
 void database_run(void)
 {
     uint32_t count = comm_getAvailableMotorDataLength();
@@ -98,6 +100,9 @@ void database_run(void)
             case 1:
                 id = reply.data.command.dataNumber;
                 memcpy(data, reply.data.dataValues, sizeof(data));
+                readyForLiftingTimer = *((uint32_t *)data);
+
+                LOG_INF("Timer Value %d", readyForLiftingTimer);
 
             case 0:
             default:
@@ -216,7 +221,22 @@ uint8_t database_getError(void)
     return errorNo;
 }
 
-DataSource_e database_getSource(void)
+uint8_t database_isReadyForLifting(void)
 {
-    return source;
+    uint8_t result = 0;
+
+    if (readyForLiftingTimer)
+    {
+        result = 1;
+        if (readyForLiftingTimer >= 1000)
+        {
+            readyForLiftingTimer = 1000;
+        }
+        else if (readyForLiftingTimer >= 500)
+        {
+            readyForLiftingTimer = 0;
+        }
+    }
+
+    return result;
 }

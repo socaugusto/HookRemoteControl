@@ -42,6 +42,6 @@ HookState_e database_getState(void);
 int16_t database_getCurrent(void);
 uint16_t database_getVoltage(void);
 uint8_t database_getError(void);
-DataSource_e database_getSource(void);
+uint8_t database_isReadyForLifting(void);
 
 #endif

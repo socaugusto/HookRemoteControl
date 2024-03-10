@@ -114,15 +114,15 @@ void remote_updateUi(void)
     lcd_clear_eol();
     lcd_set_cursor(3, 1);
 
-    if (database_getSource() == SOURCE_SPIN3204)
+    if (database_isReadyForLifting())
     {
-        lcd_send_string(">HookPos:");
-        lcd_send_string(positionString);
+        lcd_send_string(">READY FOR LOADING");
         lcd_clear_eol();
     }
     else
     {
-        lcd_send_string(">READY FOR LOADING");
+        lcd_send_string(">HookPos:");
+        lcd_send_string(positionString);
         lcd_clear_eol();
     }
     lcd_set_cursor(4, 1);
