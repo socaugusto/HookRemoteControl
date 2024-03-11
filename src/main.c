@@ -71,6 +71,7 @@ static const struct gpio_dt_spec lcdcs = GPIO_DT_SPEC_GET(DT_NODELABEL(lcdcs),
 
 static K_SEM_DEFINE(nus_write_sem, 0, 1);
 static K_SEM_DEFINE(lcd_ini_ok, 0, 1);
+static K_SEM_DEFINE(rssi_sem, 0, 1);
 
 struct uart_data_t
 {
@@ -432,6 +433,8 @@ static void connected(struct bt_conn *conn, uint8_t conn_err)
 	{
 		LOG_ERR("Stop LE scan failed (err %d)", err);
 	}
+
+	k_sem_give(&rssi_sem);
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
@@ -781,20 +784,27 @@ void ble_rssi_thread(void)
 	bt_hci_get_conn_handle(default_conn, &conn_handle);
 	sdc_hci_cmd_sp_read_rssi_t p_param = {conn_handle};
 
-	for (;;)
+	while (1)
 	{
-		sdc_hci_cmd_sp_read_rssi_return_t p_return = {conn_handle, 0};
-		uint8_t err = sdc_hci_cmd_sp_read_rssi(&p_param, &p_return);
-		if (err)
-		{
-			LOG_WRN("Error %d Reading RSSI", err);
-		}
-		else
-		{
-			system_setRssi(p_return.rssi);
-		}
+		k_sem_take(&rssi_sem, K_FOREVER);
+		k_sleep(K_MSEC(2000));
 
-		k_sleep(K_MSEC(1000));
+		for (;;)
+		{
+			sdc_hci_cmd_sp_read_rssi_return_t p_return = {conn_handle, 0};
+			uint8_t err = sdc_hci_cmd_sp_read_rssi(&p_param, &p_return);
+			if (err)
+			{
+				LOG_WRN("Error %d Reading RSSI", err);
+				break;
+			}
+			else
+			{
+				system_setRssi(p_return.rssi);
+			}
+
+			k_sleep(K_MSEC(1000));
+		}
 	}
 }
 
