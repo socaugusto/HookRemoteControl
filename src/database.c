@@ -125,7 +125,7 @@ HookState_e database_getState(void)
 {
     HookState_e result = HOOK_STATE_UNINITIALIZED;
 
-    if (hookPosition <= closedPosition)
+    if ((hookPosition <= closedPosition) || (hookPosition & 0x8000))
     {
         result = HOOK_STATE_CLOSED;
     }
@@ -145,7 +145,7 @@ HookState_e database_getState(void)
     {
         result = HOOK_STATE_OPEN;
     }
-    else if (hookPosition == UINT16_MAX)
+    else if (hookPosition == INT16_MAX)
     {
         result = HOOK_STATE_UNINITIALIZED;
     }
