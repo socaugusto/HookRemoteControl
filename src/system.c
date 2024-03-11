@@ -14,8 +14,8 @@ void system_init(const void *lcd_dev, const void *cs_dev)
 
 void system_thread(void)
 {
-    remote_run();
     database_run();
+    remote_run();
     command_run();
 }
 
@@ -29,9 +29,12 @@ void system_receiveUpdate(const uint8_t *data, uint32_t length)
     comm_addToMotorBuffer(data, length);
 }
 
-void system_updateUi(void)
+void system_updateUi(uint8_t connected)
 {
-    remote_updateUi();
+    if (connected)
+        remote_updateUi();
+    else
+        remote_disconnectedUi();
 }
 
 void system_setRssi(int8_t rssi)

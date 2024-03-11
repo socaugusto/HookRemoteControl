@@ -40,6 +40,7 @@ typedef struct CommandObject_t_
 } CommandObject_t;
 
 void command_addToBuffer(CommandInput_t *cmd);
+uint8_t command_isInExecution(void);
 void command_run(void);
 
 CommandState_e executeCmdTaskHoming(CommandObject_t *);

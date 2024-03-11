@@ -45,19 +45,11 @@ typedef enum MotorDirection_e_
 
 } MotorDirection_e;
 
-typedef enum Errors_e_
-{
-    ERROR_NONE,
-    ERROR_INVALID_PARAMETER,
-    ERROR_FAILED_TO_START_MOTOR,
-
-} Errors_e;
-
 #define HOOK_HOMING_DIRECTION CW
 #define HOOK_CLOSING_DIRECITON CW
 #define HOOK_OPENING_DIRECTION CCW
 
-static uint16_t hookPosition = UINT16_MAX;
+static uint16_t hookPosition = INT16_MAX;
 static uint16_t voltage = 0;
 static int16_t current = 0;
 static Errors_e errorNo = ERROR_NONE;
@@ -155,6 +147,11 @@ HookState_e database_getState(void)
     }
 
     return result;
+}
+
+uint8_t database_isAtEndStroke(void)
+{
+    return ((hookPosition & 0x8000U) > 0);
 }
 
 int16_t database_getHomingSpeed(void)

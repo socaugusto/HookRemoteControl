@@ -10,6 +10,7 @@ typedef enum MotorControllerMode_e_
 } MotorControllerMode_e;
 
 void mc_moveTo(int16_t target, int16_t speed, MotorControllerMode_e mode);
+void mc_setPositionHome(void);
 void mc_eack(void);
 void mc_stop(void);
 void mc_reboot(void);

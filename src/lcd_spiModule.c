@@ -242,7 +242,7 @@ void lcd_send_string(char str[])
 
 void lcd_clear_eol(void)
 {
-	while (xpos < 20)
+	while (xpos <= 20)
 	{
 		lcd_write_data(' ');
 		k_sleep(K_MSEC(1));

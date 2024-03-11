@@ -16,6 +16,11 @@ static CommandObject_t cmdObject;
 
 static CommandInput_t *process(CommandInput_t *cmd, CommandState_e state);
 
+uint8_t command_isInExecution(void)
+{
+    return (cmd != NULL);
+}
+
 void command_addToBuffer(CommandInput_t *cmd)
 {
     if (cmdCount < MAX_NUMBER_OF_COMMANDS)

@@ -23,6 +23,15 @@ typedef enum HookTarget_e_
     HOOK_TARGET_OPEN,
 } HookTarget_e;
 
+typedef enum Errors_e_
+{
+    ERROR_NONE,
+    ERROR_INVALID_PARAMETER,
+    ERROR_FAILED_TO_START_MOTOR,
+    ERROR_OVERLOAD,
+
+} Errors_e;
+
 typedef enum DataSource_e_
 {
     SOURCE_SPIN3204 = 0,
@@ -38,6 +47,7 @@ bool database_setClosingSpeed(int16_t);
 
 uint16_t database_convertTargetToValue(HookTarget_e);
 HookState_e database_getState(void);
+uint8_t database_isAtEndStroke(void);
 
 int16_t database_getCurrent(void);
 uint16_t database_getVoltage(void);

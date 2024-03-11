@@ -748,7 +748,18 @@ static void update_user_interface(void)
 
 	for (;;)
 	{
-		system_updateUi();
+		struct bt_conn_info info = {.state = BT_CONN_STATE_DISCONNECTED};
+		if (default_conn && bt_conn_get_info(default_conn, &info))
+		{
+			LOG_WRN("Error getting BT connection info");
+		}
+
+		uint8_t connectionState = 0;
+		if (info.state == BT_CONN_STATE_CONNECTED)
+		{
+			connectionState = BT_CONN_STATE_CONNECTED;
+		}
+		system_updateUi(connectionState);
 		k_sleep(K_MSEC(500));
 	}
 }
