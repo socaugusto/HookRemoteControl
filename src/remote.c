@@ -96,6 +96,7 @@ void remote_setRssi(int8_t rssi)
 
 void remote_disconnectedUi(void)
 {
+    hookState = HOOK_STATE_UNINITIALIZED;
     lcd_set_cursor(1, 1);
     lcd_send_string(">Disconnected!");
     lcd_clear_eol();
@@ -108,6 +109,10 @@ void remote_disconnectedUi(void)
     lcd_clear_eol();
     lcd_set_cursor(4, 1);
     lcd_clear_eol();
+
+    dk_set_led_off(CLOSED_LED);
+    dk_set_led_off(OPEN_LED);
+    dk_set_led_off(MID_LED);
 }
 
 void remote_updateUi(void)
