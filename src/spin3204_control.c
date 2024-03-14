@@ -97,6 +97,16 @@ void mc_setPositionHome(void)
     sendRemoteRequest((uint8_t *)&cmd, sizeof(RemoteCommand_t));
 }
 
+void mc_setPositionUninitialized(void)
+{
+    RemoteCommand_t cmd = {.operation = SPIN_COMMAND_SET_POSITION,
+                           .Parameter1 = INT16_MAX,
+                           .Parameter2 = 0,
+                           .Parameter3 = 0};
+
+    sendRemoteRequest((uint8_t *)&cmd, sizeof(RemoteCommand_t));
+}
+
 static bool sendRemoteRequest(uint8_t *data, uint8_t length)
 {
     if (length > TX_BUFFER_LENGTH)

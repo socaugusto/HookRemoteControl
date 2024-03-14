@@ -44,6 +44,8 @@ int16_t database_getHomingSpeed(void);
 bool database_setHomingSpeed(int16_t);
 int16_t database_getClosingSpeed(void);
 bool database_setClosingSpeed(int16_t);
+int16_t database_getOpeningSpeed(void);
+bool database_setOpeningSpeed(int16_t speed);
 
 uint16_t database_convertTargetToValue(HookTarget_e);
 HookState_e database_getState(void);

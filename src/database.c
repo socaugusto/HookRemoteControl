@@ -49,7 +49,7 @@ typedef enum MotorDirection_e_
 #define HOOK_CLOSING_DIRECITON CW
 #define HOOK_OPENING_DIRECTION CCW
 
-static uint16_t hookPosition = INT16_MAX;
+uint16_t hookPosition = INT16_MAX;
 static uint16_t voltage = 0;
 static int16_t current = 0;
 static Errors_e errorNo = ERROR_NONE;
@@ -60,6 +60,7 @@ static uint8_t data[4];
 
 static int16_t hommingSpeed = HOOK_HOMING_DIRECTION * 750;
 static int16_t closingSpeed = HOOK_CLOSING_DIRECITON * 1200;
+static int16_t openingSpeed = HOOK_OPENING_DIRECTION * 1200;
 
 static uint16_t homingPosition = 0;
 static uint16_t closedPosition = 1;
@@ -176,6 +177,17 @@ bool database_setClosingSpeed(int16_t speed)
     return false;
 }
 
+int16_t database_getOpeningSpeed(void)
+{
+    return openingSpeed;
+}
+
+bool database_setOpeningSpeed(int16_t speed)
+{
+    openingSpeed = speed;
+    return false;
+}
+
 uint16_t database_convertTargetToValue(HookTarget_e target)
 {
     uint16_t result = UINT16_MAX;
@@ -227,12 +239,13 @@ uint8_t database_isReadyForLifting(void)
         result = 1;
         if (readyForLiftingTimer >= 1000)
         {
-            readyForLiftingTimer = 1000;
+            readyForLiftingTimer = 500;
         }
         else if (readyForLiftingTimer >= 500)
         {
             readyForLiftingTimer = 0;
         }
+        LOG_INF("Ready for lifting: %d", readyForLiftingTimer);
     }
 
     return result;

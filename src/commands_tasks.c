@@ -15,17 +15,23 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
         if (database_isAtEndStroke())
         {
             mc_eack();
-            cmdObject->state = COMMAND_STATE_ACTION;
+            cmdObject->state = COMMAND_STATE_TEARDOWN;
         }
         else
         {
-            mc_moveTo(database_convertTargetToValue(HOOK_TARGET_HOMING), database_getHomingSpeed(), MC_MODE_CONSTANT_SPEED);
-            LOG_INF("Sent move to home");
+            mc_setPositionUninitialized();
+            LOG_INF("Reset position");
             cmdObject->state = COMMAND_STATE_SETUP;
         }
 
         break;
     case COMMAND_STATE_SETUP:
+        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_HOMING), database_getHomingSpeed(), MC_MODE_CONSTANT_SPEED);
+        LOG_INF("Sent move to home");
+        cmdObject->state = COMMAND_STATE_ACTION;
+
+        break;
+    case COMMAND_STATE_ACTION:
         if (database_isAtEndStroke())
         {
             LOG_INF("End of stroke reached");
@@ -36,11 +42,11 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
         {
             LOG_INF("Overload error detected");
             mc_eack();
-            cmdObject->state = COMMAND_STATE_ACTION;
+            cmdObject->state = COMMAND_STATE_TEARDOWN;
         }
 
         break;
-    case COMMAND_STATE_ACTION:
+    case COMMAND_STATE_TEARDOWN:
         if (database_getError() == ERROR_NONE)
         {
             LOG_INF("Error cleared");
@@ -48,8 +54,6 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
             cmdObject->state = COMMAND_STATE_END;
         }
 
-        break;
-    case COMMAND_STATE_TEARDOWN:
     case COMMAND_STATE_END:
         remote_updateHookState(HOOK_STATE_CLOSED);
         LOG_INF("Command finished homing successfull");
@@ -183,7 +187,85 @@ CommandState_e executeCmdClose(CommandObject_t *cmdObject)
             cmdObject->state = COMMAND_STATE_FINISH;
         }
 
-        cmdObject->state = COMMAND_STATE_FINISH; // TEMPORARY
+        break;
+    case COMMAND_STATE_FINISH:
+    default:
+
+        break;
+    }
+
+    return cmdObject->state;
+}
+
+static CommandState_e executeCmdMid(CommandObject_t *cmdObject, int16_t speed)
+{
+    switch (cmdObject->state)
+    {
+    case COMMAND_STATE_START:
+        cmdObject->state = COMMAND_STATE_ACTION;
+
+        break;
+    case COMMAND_STATE_SETUP:
+
+        break;
+    case COMMAND_STATE_ACTION:
+        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_MID), speed, MC_MODE_CONSTANT_SPEED);
+        LOG_INF("Send command mid...");
+        cmdObject->state = COMMAND_STATE_END;
+
+        break;
+    case COMMAND_STATE_TEARDOWN:
+
+        break;
+    case COMMAND_STATE_END:
+        if (database_getState() == HOOK_STATE_MID)
+        {
+            cmdObject->state = COMMAND_STATE_FINISH;
+        }
+
+        break;
+    case COMMAND_STATE_FINISH:
+    default:
+
+        break;
+    }
+
+    return cmdObject->state;
+}
+
+CommandState_e executeCmdMidClose(CommandObject_t *cmdObject)
+{
+    executeCmdMid(cmdObject, database_getClosingSpeed());
+}
+CommandState_e executeCmdMidOpen(CommandObject_t *cmdObject)
+{
+    executeCmdMid(cmdObject, database_getOpeningSpeed());
+}
+
+CommandState_e executeCmdOpen(CommandObject_t *cmdObject)
+{
+    switch (cmdObject->state)
+    {
+    case COMMAND_STATE_START:
+        cmdObject->state = COMMAND_STATE_ACTION;
+
+        break;
+    case COMMAND_STATE_SETUP:
+
+        break;
+    case COMMAND_STATE_ACTION:
+        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_OPEN), database_getOpeningSpeed(), MC_MODE_CONSTANT_SPEED);
+        cmdObject->state = COMMAND_STATE_END;
+
+        break;
+    case COMMAND_STATE_TEARDOWN:
+
+        break;
+    case COMMAND_STATE_END:
+        if (database_getState() == HOOK_STATE_OPEN)
+        {
+            cmdObject->state = COMMAND_STATE_FINISH;
+        }
 
         break;
     case COMMAND_STATE_FINISH:

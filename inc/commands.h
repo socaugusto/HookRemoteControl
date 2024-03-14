@@ -11,8 +11,9 @@ typedef enum Command_e_
     COMMAND_SYSTEM_RESET,
     COMMAND_STOP,
     COMMAND_HOOK_CLOSE = 128,
-    COMMAND_HOOK_MID = 136,
-    COMMAND_HOOK_OPEN = 142
+    COMMAND_HOOK_MID_CLOSE = 136,
+    COMMAND_HOOK_OPEN = 144,
+    COMMAND_HOOK_MID_OPEN = 152,
 } Command_e;
 
 typedef enum CommandState_e_
@@ -42,11 +43,15 @@ typedef struct CommandObject_t_
 void command_addToBuffer(CommandInput_t *cmd);
 uint8_t command_isInExecution(void);
 void command_run(void);
+void command_flush(void);
 
 CommandState_e executeCmdTaskHoming(CommandObject_t *);
 CommandState_e executeCmdTaskEack(CommandObject_t *);
 CommandState_e executeCmdTaskStop(CommandObject_t *);
 CommandState_e executeCmdTaskReboot(CommandObject_t *);
 CommandState_e executeCmdClose(CommandObject_t *);
+CommandState_e executeCmdMidClose(CommandObject_t *);
+CommandState_e executeCmdMidOpen(CommandObject_t *);
+CommandState_e executeCmdOpen(CommandObject_t *);
 
 #endif

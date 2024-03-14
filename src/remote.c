@@ -18,6 +18,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define BUTTON_OPEN_MASK 64
 
 static HookState_e hookState = HOOK_STATE_UNINITIALIZED;
+static HookState_e hookStatePrevious = HOOK_STATE_UNINITIALIZED;
 static uint8_t *stateMessage = NULL;
 static uint8_t *positionString = NULL;
 
@@ -25,8 +26,10 @@ static uint8_t *stringError = "?";
 static uint8_t *stringOpen = "OPEN";
 static uint8_t *stringMid = "MID";
 static uint8_t *stringClosed = "CLOSED";
-static uint8_t *stringHome = "Any button for close";
-static uint8_t stringHomeAction[] = "Seek end of stroke";
+static uint8_t *stringHome = ">Any button close";
+static uint8_t *stringHomeAction = ">Seek end of stroke";
+static uint8_t *stringProgressOpen = "Opening...";
+static uint8_t *stringProgressClose = "Closing...";
 
 static uint8_t faultLed = 0;
 static uint32_t buttonsPressed = 0;
@@ -97,6 +100,7 @@ void remote_setRssi(int8_t rssi)
 void remote_disconnectedUi(void)
 {
     hookState = HOOK_STATE_UNINITIALIZED;
+    command_flush();
     lcd_set_cursor(1, 1);
     lcd_send_string(">Disconnected!");
     lcd_clear_eol();
@@ -140,6 +144,14 @@ void remote_updateUi(void)
 
         break;
     case HOOK_STATE_PARTIALLY_CLOSED:
+        if (hookStatePrevious == HOOK_STATE_CLOSED)
+        {
+            positionString = stringProgressOpen;
+        }
+        else
+        {
+            positionString = stringProgressClose;
+        }
 
         break;
     case HOOK_STATE_MID:
@@ -150,7 +162,14 @@ void remote_updateUi(void)
 
         break;
     case HOOK_STATE_PARTIALLY_OPEN:
-        positionString = stringMid;
+        if (hookStatePrevious == HOOK_STATE_MID)
+        {
+            positionString = stringProgressOpen;
+        }
+        else
+        {
+            positionString = stringProgressClose;
+        }
 
         break;
     case HOOK_STATE_OPEN:
@@ -168,7 +187,12 @@ void remote_updateUi(void)
     }
 
     lcd_set_cursor(3, 1);
-    if (database_isReadyForLifting())
+    if (database_getError())
+    {
+        lcd_send_string(">Error Number:");
+        lcd_send_string(database_getError());
+    }
+    else if (database_isReadyForLifting())
     {
         lcd_send_string(">READY FOR LOADING");
     }
@@ -219,6 +243,11 @@ void remote_updateHookState(HookState_e state)
 
 static void stateMachine(void)
 {
+    if (hookState != HOOK_STATE_UNINITIALIZED)
+    {
+        hookState = database_getError() ? HOOK_STATE_ERROR : database_getState();
+    }
+
     switch (hookState)
     {
     case HOOK_STATE_UNINITIALIZED:
@@ -235,25 +264,80 @@ static void stateMachine(void)
             stateMessage = stringHomeAction;
         }
         buttonsExecute = 0;
+        hookStatePrevious = HOOK_STATE_UNINITIALIZED;
 
         break;
     case HOOK_STATE_CLOSED:
         stateMessage = NULL;
+        if ((buttonsExecute & BUTTON_MID_MASK) && !command_isInExecution())
+        {
+            CommandInput_t cmd = {.operation = COMMAND_HOOK_MID_OPEN};
+            command_addToBuffer(&cmd);
+            LOG_INF("Executing going to mid...");
+        }
+        else if ((buttonsExecute & BUTTON_OPEN_MASK) && !command_isInExecution())
+        {
+            CommandInput_t cmd = {.operation = COMMAND_HOOK_OPEN};
+            command_addToBuffer(&cmd);
+            LOG_INF("Executing going to open...");
+        }
+        else if (command_isInExecution())
+        {
+        }
+        buttonsExecute = 0;
+        hookStatePrevious = HOOK_STATE_CLOSED;
 
         break;
     case HOOK_STATE_PARTIALLY_CLOSED:
 
         break;
     case HOOK_STATE_MID:
+        stateMessage = NULL;
+        if ((buttonsExecute & BUTTON_CLOSE_MASK) && !command_isInExecution())
+        {
+            CommandInput_t cmd = {.operation = COMMAND_HOOK_CLOSE};
+            command_addToBuffer(&cmd);
+            LOG_INF("Executing going to closed...");
+        }
+        else if ((buttonsExecute & BUTTON_OPEN_MASK) && !command_isInExecution())
+        {
+            CommandInput_t cmd = {.operation = COMMAND_HOOK_OPEN};
+            command_addToBuffer(&cmd);
+            LOG_INF("Executing going to open...");
+        }
+        else if (command_isInExecution())
+        {
+        }
+        buttonsExecute = 0;
+        hookStatePrevious = HOOK_STATE_MID;
 
         break;
     case HOOK_STATE_PARTIALLY_OPEN:
 
         break;
     case HOOK_STATE_OPEN:
+        stateMessage = NULL;
+        if ((buttonsExecute & BUTTON_MID_MASK) && !command_isInExecution())
+        {
+            CommandInput_t cmd = {.operation = COMMAND_HOOK_MID_CLOSE};
+            command_addToBuffer(&cmd);
+            LOG_INF("Executing going to mid...");
+        }
+        else if ((buttonsExecute & BUTTON_CLOSE_MASK) && !command_isInExecution())
+        {
+            CommandInput_t cmd = {.operation = COMMAND_HOOK_CLOSE};
+            command_addToBuffer(&cmd);
+            LOG_INF("Executing going to closed...");
+        }
+        else if (command_isInExecution())
+        {
+        }
+        buttonsExecute = 0;
+        hookStatePrevious = HOOK_STATE_OPEN;
 
         break;
     case HOOK_STATE_ERROR:
+        hookStatePrevious = HOOK_STATE_ERROR;
     default:
         faultLed = 1;
 

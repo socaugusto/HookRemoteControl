@@ -36,10 +36,19 @@ void command_addToBuffer(CommandInput_t *cmd)
     }
 }
 
+void command_flush(void)
+{
+    cmd = NULL;
+    cmdCount = 0;
+    cmdIdxUse = 0;
+    cmdIdxStore = 0;
+}
+
 void command_run(void)
 {
     if (cmdCount != 0 && cmd == NULL)
     {
+        cmdObject.state = COMMAND_STATE_START;
         cmd = &cmdBuffer[cmdIdxUse];
         cmdIdxUse = (cmdIdxUse + 1) % MAX_NUMBER_OF_COMMANDS;
         --cmdCount;
@@ -75,14 +84,20 @@ void command_run(void)
             cmdObject.task = executeCmdClose;
 
             break;
-        case COMMAND_HOOK_MID:
-            cmd = NULL;
+        case COMMAND_HOOK_MID_CLOSE:
+            cmdObject.operation = cmd->operation;
+            cmdObject.task = executeCmdMidClose;
 
             break;
         case COMMAND_HOOK_OPEN:
-            cmd = NULL;
+            cmdObject.operation = cmd->operation;
+            cmdObject.task = executeCmdOpen;
 
             break;
+        case COMMAND_HOOK_MID_OPEN:
+            cmdObject.operation = cmd->operation;
+            cmdObject.task = executeCmdMidOpen;
+
         default:
 
             break;
@@ -91,6 +106,7 @@ void command_run(void)
 
     if (cmd) // exists, then execute its task and process result
     {
+        // TODO(SILVIO): Command timeout
         cmd = process(cmd, cmdObject.task(&cmdObject));
     }
 }
