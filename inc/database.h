@@ -29,6 +29,7 @@ typedef enum Errors_e_
     ERROR_INVALID_PARAMETER,
     ERROR_FAILED_TO_START_MOTOR,
     ERROR_OVERLOAD,
+    ERROR_COMMAND_TIMEOUT,
 
 } Errors_e;
 
@@ -54,6 +55,8 @@ uint8_t database_isAtEndStroke(void);
 int16_t database_getCurrent(void);
 uint16_t database_getVoltage(void);
 uint8_t database_getError(void);
+void database_setError(Errors_e error);
+void database_eackError(void);
 uint8_t database_isReadyForLifting(void);
 
 #endif

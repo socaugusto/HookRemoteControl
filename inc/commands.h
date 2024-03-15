@@ -37,6 +37,7 @@ typedef struct CommandObject_t_
 {
     Command_e operation;
     CommandState_e state;
+    uint32_t timer;
     CommandState_e (*task)(struct CommandObject_t_ *);
 } CommandObject_t;
 

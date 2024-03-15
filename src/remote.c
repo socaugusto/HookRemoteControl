@@ -26,8 +26,9 @@ static uint8_t *stringError = "?";
 static uint8_t *stringOpen = "OPEN";
 static uint8_t *stringMid = "MID";
 static uint8_t *stringClosed = "CLOSED";
-static uint8_t *stringHome = ">Any button close";
+static uint8_t *stringHome = ">Press any to reset";
 static uint8_t *stringHomeAction = ">Seek end of stroke";
+static uint8_t *stringEack = ">Press any to clear";
 static uint8_t *stringProgressOpen = "Opening...";
 static uint8_t *stringProgressClose = "Closing...";
 
@@ -148,7 +149,7 @@ void remote_updateUi(void)
         {
             positionString = stringProgressOpen;
         }
-        else
+        else if (hookStatePrevious == HOOK_STATE_MID)
         {
             positionString = stringProgressClose;
         }
@@ -166,7 +167,7 @@ void remote_updateUi(void)
         {
             positionString = stringProgressOpen;
         }
-        else
+        else if (hookStatePrevious == HOOK_STATE_OPEN)
         {
             positionString = stringProgressClose;
         }
@@ -182,6 +183,9 @@ void remote_updateUi(void)
     default:
     case HOOK_STATE_ERROR:
         positionString = stringError;
+        dk_set_led_off(CLOSED_LED);
+        dk_set_led_off(OPEN_LED);
+        dk_set_led_off(MID_LED);
 
         break;
     }
@@ -189,8 +193,7 @@ void remote_updateUi(void)
     lcd_set_cursor(3, 1);
     if (database_getError())
     {
-        lcd_send_string(">Error Number:");
-        lcd_send_string(database_getError());
+        lcd_print(">Error Number:%.0f", database_getError());
     }
     else if (database_isReadyForLifting())
     {
@@ -263,6 +266,7 @@ static void stateMachine(void)
         {
             stateMessage = stringHomeAction;
         }
+        faultLed = 0;
         buttonsExecute = 0;
         hookStatePrevious = HOOK_STATE_UNINITIALIZED;
 
@@ -337,6 +341,18 @@ static void stateMachine(void)
 
         break;
     case HOOK_STATE_ERROR:
+        stateMessage = stringEack;
+        if (buttonsExecute && !command_isInExecution())
+        {
+            CommandInput_t cmd = {.operation = COMMAND_EACK};
+            command_addToBuffer(&cmd);
+            LOG_INF("Executing eack...");
+        }
+        else if (command_isInExecution())
+        {
+            stateMessage = NULL;
+        }
+        buttonsExecute = 0;
         hookStatePrevious = HOOK_STATE_ERROR;
     default:
         faultLed = 1;

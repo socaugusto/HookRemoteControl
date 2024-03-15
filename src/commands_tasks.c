@@ -74,21 +74,50 @@ CommandState_e executeCmdTaskEack(CommandObject_t *cmdObject)
     switch (cmdObject->state)
     {
     case COMMAND_STATE_START:
-        cmdObject->state = COMMAND_STATE_ACTION;
+        database_eackError();
+        LOG_INF("Clearing error...");
+        cmdObject->state = COMMAND_STATE_SETUP;
 
         break;
     case COMMAND_STATE_SETUP:
+        if (cmdObject->timer > 40)
+        {
+            if (database_getError() == ERROR_NONE)
+            {
+                cmdObject->state = COMMAND_STATE_END;
+                LOG_INF("Error cleared in remote");
+            }
+            else
+            {
+                mc_eack();
+                database_eackError();
+                cmdObject->state = COMMAND_STATE_ACTION;
+                LOG_INF("Sending error clearing to hook...");
+            }
+        }
 
         break;
     case COMMAND_STATE_ACTION:
-        mc_eack();
-        cmdObject->state = COMMAND_STATE_FINISH;
+        if (cmdObject->timer > 80)
+        {
+            if (database_getError() == ERROR_NONE)
+            {
+                cmdObject->state = COMMAND_STATE_END;
+                LOG_INF("Error cleared in hook");
+            }
+            else
+            {
+                database_eackError();
+            }
+        }
 
         break;
     case COMMAND_STATE_TEARDOWN:
 
         break;
     case COMMAND_STATE_END:
+        remote_updateHookState(HOOK_STATE_UNINITIALIZED);
+        cmdObject->state = COMMAND_STATE_FINISH;
 
         break;
     case COMMAND_STATE_FINISH:
@@ -113,6 +142,7 @@ CommandState_e executeCmdTaskStop(CommandObject_t *cmdObject)
         break;
     case COMMAND_STATE_ACTION:
         mc_stop();
+        LOG_INF("Sent stop request...");
         cmdObject->state = COMMAND_STATE_FINISH;
 
         break;

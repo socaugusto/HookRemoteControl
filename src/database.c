@@ -84,7 +84,7 @@ void database_run(void)
             hookPosition = reply.data.position;
             voltage = reply.data.voltage;
             current = reply.data.current;
-            errorNo = reply.data.error;
+            database_setError(reply.data.error);
             sequenceNumber = reply.data.command.sequenceNumber;
             source = reply.data.command.dataType;
 
@@ -228,6 +228,19 @@ uint16_t database_getVoltage(void)
 uint8_t database_getError(void)
 {
     return errorNo;
+}
+
+void database_setError(Errors_e error)
+{
+    if (errorNo == ERROR_NONE)
+    {
+        errorNo = error;
+    }
+}
+
+void database_eackError(void)
+{
+    errorNo = ERROR_NONE;
 }
 
 uint8_t database_isReadyForLifting(void)

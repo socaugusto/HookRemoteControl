@@ -6,6 +6,7 @@
 #define LOG_MODULE_NAME commands
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
+#define TIMEOUT_COMMAND 800
 #define MAX_NUMBER_OF_COMMANDS 8
 static CommandInput_t cmdBuffer[MAX_NUMBER_OF_COMMANDS];
 static int32_t cmdIdxStore = 0; // Head
@@ -14,7 +15,8 @@ static int32_t cmdCount = 0;
 static CommandInput_t *cmd = NULL;
 static CommandObject_t cmdObject;
 
-static CommandInput_t *process(CommandInput_t *cmd, CommandState_e state);
+static CommandInput_t *process(CommandInput_t *cmd, CommandObject_t *cmdObject);
+static CommandInput_t *requestStop(void);
 
 uint8_t command_isInExecution(void)
 {
@@ -49,6 +51,7 @@ void command_run(void)
     if (cmdCount != 0 && cmd == NULL)
     {
         cmdObject.state = COMMAND_STATE_START;
+        cmdObject.timer = 0;
         cmd = &cmdBuffer[cmdIdxUse];
         cmdIdxUse = (cmdIdxUse + 1) % MAX_NUMBER_OF_COMMANDS;
         --cmdCount;
@@ -106,12 +109,41 @@ void command_run(void)
 
     if (cmd) // exists, then execute its task and process result
     {
-        // TODO(SILVIO): Command timeout
-        cmd = process(cmd, cmdObject.task(&cmdObject));
+        cmd = process(cmd, &cmdObject);
     }
 }
 
-static CommandInput_t *process(CommandInput_t *cmd, CommandState_e state)
+static CommandInput_t *process(CommandInput_t *cmd, CommandObject_t *cmdObject)
 {
-    return (COMMAND_STATE_FINISH == state ? NULL : cmd);
+    ++cmdObject->timer;
+    CommandInput_t *result = cmd;
+    CommandState_e state = cmdObject->task(cmdObject);
+
+    if (cmdObject->timer > TIMEOUT_COMMAND)
+    {
+        database_setError(ERROR_COMMAND_TIMEOUT);
+        result = requestStop();
+        LOG_WRN("[ERROR] Timeout, request stop...");
+    }
+    else if (database_getError() && (cmdObject->operation != COMMAND_STOP) && (cmdObject->operation != COMMAND_EACK))
+    {
+        LOG_WRN("[ERROR] Error, request stop...");
+        result = requestStop();
+    }
+
+    if (COMMAND_STATE_FINISH == state)
+    {
+        result = NULL;
+        LOG_INF("Command terminated!");
+    }
+
+    return result;
+}
+
+static CommandInput_t *requestStop(void)
+{
+    remote_updateHookState(HOOK_STATE_ERROR);
+    CommandInput_t cmd = {.operation = COMMAND_STOP};
+    command_addToBuffer(&cmd);
+    return NULL;
 }
