@@ -243,6 +243,16 @@ void database_eackError(void)
     errorNo = ERROR_NONE;
 }
 
+uint8_t database_getReplySeqNo(void)
+{
+    return sequenceNumber;
+}
+
+uint8_t database_getNextSeqNo(void)
+{
+    return ((sequenceNumber + 1) % 8);
+}
+
 uint8_t database_isReadyForLifting(void)
 {
     uint8_t result = 0;

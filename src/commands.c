@@ -2,6 +2,7 @@
 #include "database.h"
 #include <zephyr/logging/log.h>
 #include <memory.h>
+#include "remote.h"
 
 #define LOG_MODULE_NAME commands
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);

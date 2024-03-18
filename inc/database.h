@@ -30,6 +30,7 @@ typedef enum Errors_e_
     ERROR_FAILED_TO_START_MOTOR,
     ERROR_OVERLOAD,
     ERROR_COMMAND_TIMEOUT,
+    ERROR_INVALID_SEQUENCE_NUMBER,
 
 } Errors_e;
 
@@ -47,6 +48,8 @@ int16_t database_getClosingSpeed(void);
 bool database_setClosingSpeed(int16_t);
 int16_t database_getOpeningSpeed(void);
 bool database_setOpeningSpeed(int16_t speed);
+uint8_t database_getReplySeqNo(void);
+uint8_t database_getNextSeqNo(void);
 
 uint16_t database_convertTargetToValue(HookTarget_e);
 HookState_e database_getState(void);

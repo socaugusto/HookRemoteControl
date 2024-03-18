@@ -47,12 +47,12 @@ typedef enum Parameters_e_
 
 static bool sendRemoteRequest(uint8_t *data, uint8_t length);
 
-void mc_moveTo(int16_t target, int16_t speed, MotorControllerMode_e mode)
+void mc_moveTo(int16_t target, int16_t speed, uint8_t seqNo)
 {
-    RemoteCommand_t cmd = {.operation = SPIN_COMMAND_MOVE,
+    RemoteCommand_t cmd = {.operation = SPIN_COMMAND_MOVE + seqNo,
                            .Parameter1 = target,
                            .Parameter2 = speed,
-                           .Parameter3 = (int16_t)mode};
+                           .Parameter3 = 0};
 
     sendRemoteRequest((uint8_t *)&cmd, sizeof(RemoteCommand_t));
 }

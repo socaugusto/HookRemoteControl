@@ -26,7 +26,7 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
 
         break;
     case COMMAND_STATE_SETUP:
-        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_HOMING), database_getHomingSpeed(), MC_MODE_CONSTANT_SPEED);
+        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_HOMING), database_getHomingSpeed(), database_getNextSeqNo());
         LOG_INF("Sent move to home");
         cmdObject->state = COMMAND_STATE_ACTION;
 
@@ -174,13 +174,19 @@ CommandState_e executeCmdTaskReboot(CommandObject_t *cmdObject)
         break;
     case COMMAND_STATE_ACTION:
         mc_reboot();
-        cmdObject->state = COMMAND_STATE_FINISH;
+        LOG_INF("Reboot request...");
+        cmdObject->state = COMMAND_STATE_END;
 
         break;
     case COMMAND_STATE_TEARDOWN:
 
         break;
     case COMMAND_STATE_END:
+        if (database_getState() == HOOK_STATE_UNINITIALIZED)
+        {
+            cmdObject->state = COMMAND_STATE_FINISH;
+            LOG_INF("Reboot confirmed!");
+        }
 
         break;
     case COMMAND_STATE_FINISH:
@@ -204,7 +210,7 @@ CommandState_e executeCmdClose(CommandObject_t *cmdObject)
 
         break;
     case COMMAND_STATE_ACTION:
-        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_CLOSED), database_getClosingSpeed(), MC_MODE_CONSTANT_SPEED);
+        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_CLOSED), database_getClosingSpeed(), database_getNextSeqNo());
         cmdObject->state = COMMAND_STATE_END;
 
         break;
@@ -239,7 +245,7 @@ static CommandState_e executeCmdMid(CommandObject_t *cmdObject, int16_t speed)
 
         break;
     case COMMAND_STATE_ACTION:
-        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_MID), speed, MC_MODE_CONSTANT_SPEED);
+        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_MID), speed, database_getNextSeqNo());
         LOG_INF("Send command mid...");
         cmdObject->state = COMMAND_STATE_END;
 
@@ -265,11 +271,11 @@ static CommandState_e executeCmdMid(CommandObject_t *cmdObject, int16_t speed)
 
 CommandState_e executeCmdMidClose(CommandObject_t *cmdObject)
 {
-    executeCmdMid(cmdObject, database_getClosingSpeed());
+    return executeCmdMid(cmdObject, database_getClosingSpeed());
 }
 CommandState_e executeCmdMidOpen(CommandObject_t *cmdObject)
 {
-    executeCmdMid(cmdObject, database_getOpeningSpeed());
+    return executeCmdMid(cmdObject, database_getOpeningSpeed());
 }
 
 CommandState_e executeCmdOpen(CommandObject_t *cmdObject)
@@ -284,7 +290,7 @@ CommandState_e executeCmdOpen(CommandObject_t *cmdObject)
 
         break;
     case COMMAND_STATE_ACTION:
-        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_OPEN), database_getOpeningSpeed(), MC_MODE_CONSTANT_SPEED);
+        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_OPEN), database_getOpeningSpeed(), database_getNextSeqNo());
         cmdObject->state = COMMAND_STATE_END;
 
         break;

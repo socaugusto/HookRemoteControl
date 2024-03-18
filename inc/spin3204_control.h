@@ -3,13 +3,7 @@
 
 #include <stdint.h>
 
-typedef enum MotorControllerMode_e_
-{
-    MC_MODE_NONE,
-    MC_MODE_CONSTANT_SPEED,
-} MotorControllerMode_e;
-
-void mc_moveTo(int16_t target, int16_t speed, MotorControllerMode_e mode);
+void mc_moveTo(int16_t target, int16_t speed, uint8_t seqNo);
 void mc_setPositionHome(void);
 void mc_setPositionUninitialized(void);
 void mc_eack(void);
