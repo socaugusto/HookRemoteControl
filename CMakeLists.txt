@@ -20,6 +20,7 @@ target_sources(app PRIVATE
   src/lcd_spiModule.c
   src/remote.c
   src/adt_cbuffer.c
+  src/encoding_checksum.cpp
 )
 
 target_include_directories(app

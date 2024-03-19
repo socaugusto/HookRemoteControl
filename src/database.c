@@ -1,5 +1,6 @@
 #include "database.h"
 #include "communications.h"
+#include "encoding_checksum.h"
 #include <memory.h>
 
 #include <zephyr/logging/log.h>
@@ -81,28 +82,36 @@ void database_run(void)
             comm_removeFromMotorBuffer((uint8_t *)&reply, sizeof(HookReply_t));
             count -= sizeof(HookReply_t);
 
-            hookPosition = reply.data.position;
-            voltage = reply.data.voltage;
-            current = reply.data.current;
-            database_setError(reply.data.error);
-            sequenceNumber = reply.data.command.sequenceNumber;
-            source = reply.data.command.dataType;
-
-            switch (source)
+            uint16_t fcs = encoding_calculateFletcher16Checksum((uint8_t *)&reply, sizeof(HookReply_t) - sizeof(uint16_t));
+            if (fcs == reply.checksum)
             {
-            case 1:
-                id = reply.data.command.dataNumber;
-                memcpy(data, reply.data.dataValues, sizeof(data));
-                readyForLiftingTimer = *((uint32_t *)data);
+                hookPosition = reply.data.position;
+                voltage = reply.data.voltage;
+                current = reply.data.current;
+                database_setError(reply.data.error);
+                sequenceNumber = reply.data.command.sequenceNumber;
+                source = reply.data.command.dataType;
 
-                LOG_INF("Timer Value %d", readyForLiftingTimer);
+                switch (source)
+                {
+                case 1:
+                    id = reply.data.command.dataNumber;
+                    memcpy(data, reply.data.dataValues, sizeof(data));
+                    readyForLiftingTimer = *((uint32_t *)data);
 
-            case 0:
-            default:
-                id = reply.data.command.dataNumber;
-                memcpy(data, reply.data.dataValues, sizeof(data));
+                    LOG_INF("Timer Value %d", readyForLiftingTimer);
 
-                break;
+                case 0:
+                default:
+                    id = reply.data.command.dataNumber;
+                    memcpy(data, reply.data.dataValues, sizeof(data));
+
+                    break;
+                }
+            }
+            else
+            {
+                LOG_INF("Invalid checksum %d != %d", fcs, reply.checksum);
             }
         }
         else
@@ -110,6 +119,7 @@ void database_run(void)
             uint8_t discard;
             comm_removeFromMotorBuffer(&discard, 1);
             --count;
+            LOG_INF("Discarded byte %x", discard);
         }
     }
 }
