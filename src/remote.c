@@ -13,6 +13,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define MID_LED 5
 #define CLOSED_LED 6
 #define BUTTON_EXECUTE_THRESHOLD 10
+#define BUTTON_ESTOP_MASK 1
+#define BUTTON_PARAMETER_MASK 2
 #define BUTTON_CLOSE_MASK 16
 #define BUTTON_MID_MASK 32
 #define BUTTON_OPEN_MASK 64
@@ -29,6 +31,7 @@ static uint8_t *stringClosed = "CLOSED";
 static uint8_t *stringHome = ">Press any to reset";
 static uint8_t *stringHomeAction = ">Seek end of stroke";
 static uint8_t *stringEack = ">Press any to clear";
+static uint8_t *stringEstop = ">E-STOP Activated";
 static uint8_t *stringProgressOpen = "Opening...";
 static uint8_t *stringProgressClose = "Closing...";
 
@@ -52,38 +55,47 @@ void remote_updateButtons(uint32_t button_state, uint32_t has_changed)
 {
     buttonsPressed = button_state;
 
-    // Buttons is released
-    if (!(button_state & BUTTON_CLOSE_MASK) && (has_changed & BUTTON_CLOSE_MASK))
+    if (button_state & BUTTON_ESTOP_MASK)
     {
-        // If filter is big enough
-        if (closeButton > BUTTON_EXECUTE_THRESHOLD)
-        {
-            buttonsExecute |= BUTTON_CLOSE_MASK;
-            LOG_INF("Execute button %d", buttonsExecute);
-        }
-        closeButton = 0;
+        buttonsExecute |= BUTTON_ESTOP_MASK;
+        LOG_INF("Execute button %d", buttonsExecute);
     }
-
-    if (!(button_state & BUTTON_MID_MASK) && (has_changed & BUTTON_MID_MASK))
+    else
     {
-        // If filter is big enough
-        if (midButton > BUTTON_EXECUTE_THRESHOLD)
+        buttonsExecute &= ~BUTTON_ESTOP_MASK;
+        // Buttons is released
+        if (!(button_state & BUTTON_CLOSE_MASK) && (has_changed & BUTTON_CLOSE_MASK))
         {
-            buttonsExecute |= BUTTON_MID_MASK;
-            LOG_INF("Execute button %d", buttonsExecute);
+            // If filter is big enough
+            if (closeButton > BUTTON_EXECUTE_THRESHOLD)
+            {
+                buttonsExecute |= BUTTON_CLOSE_MASK;
+                LOG_INF("Execute button %d", buttonsExecute);
+            }
+            closeButton = 0;
         }
-        midButton = 0;
-    }
 
-    if (!(button_state & BUTTON_OPEN_MASK) && (has_changed & BUTTON_OPEN_MASK))
-    {
-        // If filter is big enough
-        if (openButton > BUTTON_EXECUTE_THRESHOLD)
+        if (!(button_state & BUTTON_MID_MASK) && (has_changed & BUTTON_MID_MASK))
         {
-            buttonsExecute |= BUTTON_OPEN_MASK;
-            LOG_INF("Execute button %d", buttonsExecute);
+            // If filter is big enough
+            if (midButton > BUTTON_EXECUTE_THRESHOLD)
+            {
+                buttonsExecute |= BUTTON_MID_MASK;
+                LOG_INF("Execute button %d", buttonsExecute);
+            }
+            midButton = 0;
         }
-        openButton = 0;
+
+        if (!(button_state & BUTTON_OPEN_MASK) && (has_changed & BUTTON_OPEN_MASK))
+        {
+            // If filter is big enough
+            if (openButton > BUTTON_EXECUTE_THRESHOLD)
+            {
+                buttonsExecute |= BUTTON_OPEN_MASK;
+                LOG_INF("Execute button %d", buttonsExecute);
+            }
+            openButton = 0;
+        }
     }
 }
 
@@ -250,13 +262,19 @@ static void stateMachine(void)
     {
         hookState = database_getError() ? HOOK_STATE_ERROR : database_getState();
     }
+    else if (buttonsExecute & BUTTON_ESTOP_MASK)
+    {
+        database_setError(ERROR_ESTOP);
+        hookState = HOOK_STATE_ERROR;
+    }
 
     switch (hookState)
     {
     case HOOK_STATE_UNINITIALIZED:
         stateMessage = stringHome;
+        uint32_t buttons = (buttonsExecute & (BUTTON_CLOSE_MASK | BUTTON_MID_MASK | BUTTON_OPEN_MASK));
 
-        if (buttonsExecute && !command_isInExecution())
+        if (buttons && !command_isInExecution())
         {
             CommandInput_t cmd = {.operation = COMMAND_HOMING};
             command_addToBuffer(&cmd);
@@ -342,7 +360,12 @@ static void stateMachine(void)
         break;
     case HOOK_STATE_ERROR:
         stateMessage = stringEack;
-        if (buttonsExecute && !command_isInExecution())
+
+        if (buttonsExecute & BUTTON_ESTOP_MASK)
+        {
+            stateMessage = stringEstop;
+        }
+        else if (buttonsExecute && !command_isInExecution())
         {
             CommandInput_t cmd = {.operation = COMMAND_EACK};
             command_addToBuffer(&cmd);
@@ -352,7 +375,11 @@ static void stateMachine(void)
         {
             stateMessage = NULL;
         }
-        buttonsExecute = 0;
+
+        if (!(buttonsExecute & BUTTON_ESTOP_MASK))
+        {
+            buttonsExecute = 0;
+        }
         hookStatePrevious = HOOK_STATE_ERROR;
     default:
         faultLed = 1;

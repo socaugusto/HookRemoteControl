@@ -31,6 +31,7 @@ typedef enum Errors_e_
     ERROR_OVERLOAD,
     ERROR_COMMAND_TIMEOUT,
     ERROR_INVALID_SEQUENCE_NUMBER,
+    ERROR_ESTOP,
 
 } Errors_e;
 
