@@ -41,6 +41,7 @@ static uint32_t buttonsExecute = 0;
 static uint32_t closeButton = 0;
 static uint32_t midButton = 0;
 static uint32_t openButton = 0;
+static uint32_t parameterButton = 0;
 static int32_t rssiValue = 0;
 
 static void updateButtons(void);
@@ -95,6 +96,17 @@ void remote_updateButtons(uint32_t button_state, uint32_t has_changed)
                 LOG_INF("Execute button %d", buttonsExecute);
             }
             openButton = 0;
+        }
+
+        if (!(button_state & BUTTON_PARAMETER_MASK) && (has_changed & BUTTON_PARAMETER_MASK))
+        {
+            // If filter is big enough
+            if (parameterButton > BUTTON_EXECUTE_THRESHOLD)
+            {
+                buttonsExecute |= BUTTON_PARAMETER_MASK;
+                LOG_INF("Execute button %d", buttonsExecute);
+            }
+            parameterButton = 0;
         }
     }
 }
@@ -248,6 +260,10 @@ static void updateButtons(void)
     if (buttonsPressed & BUTTON_OPEN_MASK)
     {
         ++openButton;
+    }
+    if (buttonsPressed & BUTTON_PARAMETER_MASK)
+    {
+        ++parameterButton;
     }
 }
 
