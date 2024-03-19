@@ -278,7 +278,8 @@ static void stateMachine(void)
     {
         hookState = database_getError() ? HOOK_STATE_ERROR : database_getState();
     }
-    else if (buttonsExecute & BUTTON_ESTOP_MASK)
+
+    if (buttonsExecute & BUTTON_ESTOP_MASK)
     {
         database_setError(ERROR_ESTOP);
         hookState = HOOK_STATE_ERROR;
