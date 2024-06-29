@@ -42,6 +42,7 @@ typedef enum Parameters_e_
     PARAMETER_CURRENT_LIMIT_TYPE,
     PARAMETER_CURRENT_LIMIT_ADC_FILTER_VALUE,
     PARAMETER_CURRENT_PIN_CONFIG,
+    PARAMETER_IGNORE_SENSOR,
 
 } Parameters_e;
 
@@ -102,6 +103,32 @@ void mc_setPositionUninitialized(void)
     RemoteCommand_t cmd = {.operation = SPIN_COMMAND_SET_POSITION,
                            .Parameter1 = INT16_MAX,
                            .Parameter2 = 0,
+                           .Parameter3 = 0};
+
+    sendRemoteRequest((uint8_t *)&cmd, sizeof(RemoteCommand_t));
+}
+
+void mc_setIgnoreSensorParameter(uint8_t ignore)
+{
+    if (ignore)
+    {
+        ignore = 1;
+    }
+
+    RemoteCommand_t cmd = {.operation = SPIN_COMMAND_SET_PARAMETER,
+                           .Parameter1 = PARAMETER_IGNORE_SENSOR,
+                           .Parameter2 = ignore,
+                           .Parameter3 = 0};
+
+    sendRemoteRequest((uint8_t *)&cmd, sizeof(RemoteCommand_t));
+}
+
+void mc_setCurrentLimitParameter(uint16_t value)
+{
+
+    RemoteCommand_t cmd = {.operation = SPIN_COMMAND_SET_PARAMETER,
+                           .Parameter1 = PARAMETER_CURRENT_LIMIT_VALUE,
+                           .Parameter2 = value,
                            .Parameter3 = 0};
 
     sendRemoteRequest((uint8_t *)&cmd, sizeof(RemoteCommand_t));

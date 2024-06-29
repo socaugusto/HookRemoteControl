@@ -9,5 +9,7 @@ void mc_setPositionUninitialized(void);
 void mc_eack(void);
 void mc_stop(void);
 void mc_reboot(void);
+void mc_setIgnoreSensorParameter(uint8_t ignore);
+void mc_setCurrentLimitParameter(uint16_t value);
 
 #endif
