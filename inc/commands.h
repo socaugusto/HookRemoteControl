@@ -10,6 +10,7 @@ typedef enum Command_e_
     COMMAND_EACK,
     COMMAND_SYSTEM_RESET,
     COMMAND_STOP,
+    COMMAND_ENABLE_RECOVERY,
     COMMAND_HOOK_CLOSE = 128,
     COMMAND_HOOK_MID_CLOSE = 136,
     COMMAND_HOOK_OPEN = 144,
@@ -25,6 +26,7 @@ typedef enum CommandState_e_
     COMMAND_STATE_END,
     COMMAND_STATE_FINISH,
 } CommandState_e;
+
 typedef struct CommandInput_t_
 {
     Command_e operation;
@@ -54,5 +56,6 @@ CommandState_e executeCmdClose(CommandObject_t *);
 CommandState_e executeCmdMidClose(CommandObject_t *);
 CommandState_e executeCmdMidOpen(CommandObject_t *);
 CommandState_e executeCmdOpen(CommandObject_t *);
+CommandState_e executeEnableRecovery(CommandObject_t *);
 
 #endif

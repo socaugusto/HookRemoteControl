@@ -55,7 +55,14 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
         }
 
     case COMMAND_STATE_END:
-        remote_updateHookState(HOOK_STATE_CLOSED);
+
+        if (database_isPositionEncoderHome())
+        {
+            remote_updateHookState(HOOK_STATE_CLOSED);
+            mc_setIgnoreSensorParameter(0);
+            remote_enableProtectionError();
+        }
+
         LOG_INF("Command finished homing successfull");
         cmdObject->state = COMMAND_STATE_FINISH;
 
@@ -203,6 +210,7 @@ CommandState_e executeCmdClose(CommandObject_t *cmdObject)
     switch (cmdObject->state)
     {
     case COMMAND_STATE_START:
+        mc_setCurrentLimitParameter(database_getCurrentAt(CURRENT_LIMIT_OPERATION));
         cmdObject->state = COMMAND_STATE_ACTION;
 
         break;
@@ -238,6 +246,7 @@ static CommandState_e executeCmdMid(CommandObject_t *cmdObject, int16_t speed)
     switch (cmdObject->state)
     {
     case COMMAND_STATE_START:
+        mc_setCurrentLimitParameter(database_getCurrentAt(CURRENT_LIMIT_OPERATION));
         cmdObject->state = COMMAND_STATE_ACTION;
 
         break;
@@ -283,6 +292,7 @@ CommandState_e executeCmdOpen(CommandObject_t *cmdObject)
     switch (cmdObject->state)
     {
     case COMMAND_STATE_START:
+        mc_setCurrentLimitParameter(database_getCurrentAt(CURRENT_LIMIT_OPERATION));
         cmdObject->state = COMMAND_STATE_ACTION;
 
         break;
@@ -302,6 +312,41 @@ CommandState_e executeCmdOpen(CommandObject_t *cmdObject)
         {
             cmdObject->state = COMMAND_STATE_FINISH;
         }
+
+        break;
+    case COMMAND_STATE_FINISH:
+    default:
+
+        break;
+    }
+
+    return cmdObject->state;
+}
+
+CommandState_e executeEnableRecovery(CommandObject_t *cmdObject)
+{
+    switch (cmdObject->state)
+    {
+    case COMMAND_STATE_START:
+        mc_setIgnoreSensorParameter(1);
+        cmdObject->state = COMMAND_STATE_SETUP;
+
+        break;
+    case COMMAND_STATE_SETUP:
+         if (cmdObject->timer > 40)
+        {
+            mc_setCurrentLimitParameter(database_getCurrentAt(CURRENT_LIMIT_RECOVERY));
+            cmdObject->state = COMMAND_STATE_FINISH;
+        }
+
+        break;
+    case COMMAND_STATE_ACTION:
+
+        break;
+    case COMMAND_STATE_TEARDOWN:
+
+        break;
+    case COMMAND_STATE_END:
 
         break;
     case COMMAND_STATE_FINISH:
