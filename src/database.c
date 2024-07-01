@@ -63,6 +63,9 @@ static int16_t hommingSpeed = HOOK_HOMING_DIRECTION * 750;
 static int16_t closingSpeed = HOOK_CLOSING_DIRECITON * 1200;
 static int16_t openingSpeed = HOOK_OPENING_DIRECTION * 1200;
 
+static uint16_t currentLimitOperation = 10000;
+static uint16_t currentLimitRecovery = 5000;
+
 static uint16_t homingPosition = 0;
 static uint16_t closedPosition = 1;
 static uint16_t midPosition = 5000;
@@ -160,9 +163,28 @@ HookState_e database_getState(void)
     return result;
 }
 
+bool database_isPositionEncoderHome(void)
+{
+    return (hookPosition <= closedPosition);
+}
+
 uint8_t database_isAtEndStroke(void)
 {
     return ((hookPosition & 0x8000U) > 0);
+}
+
+bool database_isProtectionTriggered(void)
+{
+    bool result = false;
+    if (hookPosition & 0x8000)
+    {
+        uint16_t encoderValue = hookPosition & 0x7FFF;
+        if (encoderValue > 500) // 500 is a value to test
+        {
+            result = true;
+        }
+    }
+    return result;
 }
 
 int16_t database_getHomingSpeed(void)
@@ -174,6 +196,28 @@ bool database_setHomingSpeed(int16_t speed)
 {
     hommingSpeed = speed;
     return false;
+}
+
+uint16_t database_getCurrentAt(CurrentLimitValues_e value)
+{
+    uint16_t result = 0;
+
+    switch (value)
+    {
+    case CURRENT_LIMIT_RECOVERY:
+        result = currentLimitRecovery;
+
+        break;
+    case CURRENT_LIMIT_OPERATION:
+        result = currentLimitOperation;
+
+        break;
+    default:
+
+        break;
+    }
+
+    return result;
 }
 
 int16_t database_getClosingSpeed(void)

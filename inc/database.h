@@ -42,6 +42,12 @@ typedef enum DataSource_e_
     SOURCE_LOADMASTER = 1,
 } DataSource_e;
 
+typedef enum CurrentLimitValues_e_
+{
+    CURRENT_LIMIT_RECOVERY = 0,
+    CURRENT_LIMIT_OPERATION,
+} CurrentLimitValues_e;
+
 void database_run(void);
 
 int16_t database_getHomingSpeed(void);
@@ -56,6 +62,9 @@ uint8_t database_getNextSeqNo(void);
 uint16_t database_convertTargetToValue(HookTarget_e);
 HookState_e database_getState(void);
 uint8_t database_isAtEndStroke(void);
+bool database_isProtectionTriggered(void);
+bool database_isPositionEncoderHome(void);
+uint16_t database_getCurrentAt(CurrentLimitValues_e value);
 
 int16_t database_getCurrent(void);
 uint16_t database_getVoltage(void);
