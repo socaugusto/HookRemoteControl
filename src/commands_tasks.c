@@ -55,16 +55,15 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
         }
 
     case COMMAND_STATE_END:
-
         if (database_isPositionEncoderHome())
         {
             remote_updateHookState(HOOK_STATE_CLOSED);
             mc_setIgnoreSensorParameter(0);
-            remote_enableProtectionError();
+            database_resetIgnoreProtection();
+            LOG_INF("Command finished homing successfull");
+            cmdObject->state = COMMAND_STATE_FINISH;
         }
 
-        LOG_INF("Command finished homing successfull");
-        cmdObject->state = COMMAND_STATE_FINISH;
 
         break;
     case COMMAND_STATE_FINISH:

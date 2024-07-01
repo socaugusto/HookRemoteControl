@@ -72,6 +72,7 @@ static uint16_t midPosition = 5000;
 static uint16_t openPosition = 13200;
 
 static uint32_t readyForLiftingTimer = 0;
+static uint32_t ignoreProtection = 0;
 
 void database_run(void)
 {
@@ -163,20 +164,20 @@ HookState_e database_getState(void)
     return result;
 }
 
-bool database_isPositionEncoderHome(void)
-{
-    return (hookPosition <= closedPosition);
-}
-
 uint8_t database_isAtEndStroke(void)
 {
-    return ((hookPosition & 0x8000U) > 0);
+    return (((hookPosition & 0x8000U) > 0) && !ignoreProtection);
+}
+
+bool database_isPositionEncoderHome(void)
+{
+    return ((hookPosition <= closedPosition) || database_isAtEndStroke());
 }
 
 bool database_isProtectionTriggered(void)
 {
     bool result = false;
-    if (hookPosition & 0x8000)
+    if (database_isAtEndStroke())
     {
         uint16_t encoderValue = hookPosition & 0x7FFF;
         if (encoderValue > 500) // 500 is a value to test
@@ -185,6 +186,30 @@ bool database_isProtectionTriggered(void)
         }
     }
     return result;
+}
+
+bool database_ignoreProtection(void)
+{
+    return ignoreProtection;
+}
+
+void database_advanceProtectionRecovery(void)
+{
+    if (ignoreProtection < 2)
+    {
+        ++ignoreProtection;
+    }
+    
+}
+
+bool database_requestEnableRecovery(void)
+{
+    return (ignoreProtection == 1);
+}
+
+void database_resetIgnoreProtection(void)
+{
+    ignoreProtection = 0;
 }
 
 int16_t database_getHomingSpeed(void)
