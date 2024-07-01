@@ -43,6 +43,7 @@ static uint32_t midButton = 0;
 static uint32_t openButton = 0;
 static uint32_t parameterButton = 0;
 static int32_t rssiValue = 0;
+static int32_t ignoreProtectionError = 0;
 
 static void updateButtons(void);
 static void stateMachine(void);
@@ -272,11 +273,23 @@ void remote_updateHookState(HookState_e state)
     hookState = state;
 }
 
+void remote_enableProtectionError(void)
+{
+    ignoreProtectionError = 0;
+}
+
 static void stateMachine(void)
 {
     if (hookState != HOOK_STATE_UNINITIALIZED)
     {
         hookState = database_getError() ? HOOK_STATE_ERROR : database_getState();
+
+        if (database_isProtectionTriggered() && !ignoreProtectionError)
+        {
+            database_setError(ERROR_PROTECTION_ACTIVATED);
+            hookState = HOOK_STATE_ERROR;
+            ignoreProtectionError = 1;
+        }
     }
 
     if (buttonsExecute & BUTTON_ESTOP_MASK)
@@ -387,6 +400,16 @@ static void stateMachine(void)
             CommandInput_t cmd = {.operation = COMMAND_EACK};
             command_addToBuffer(&cmd);
             LOG_INF("Executing eack...");
+
+            if (ignoreProtectionError == 1)
+            {
+                cmd.operation = COMMAND_ENABLE_RECOVERY;
+                cmd.parameter1 = 1;
+                command_addToBuffer(&cmd);
+                LOG_INF("Enabling recovery...");
+
+                ignoreProtectionError = 2;
+            }
         }
         else if (command_isInExecution())
         {
