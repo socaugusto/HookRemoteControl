@@ -50,7 +50,10 @@ typedef enum MotorDirection_e_
 #define HOOK_CLOSING_DIRECTION CW
 #define HOOK_OPENING_DIRECTION CCW
 
-uint16_t hookPosition = INT16_MAX;
+static int32_t hookVelocityCounter = 0;
+static int32_t hookVelocity = 0;
+static uint16_t hookPreviousPosition = INT16_MAX;
+static uint16_t hookPosition = INT16_MAX;
 static uint16_t voltage = 0;
 static int16_t current = 0;
 static Errors_e errorNo = ERROR_NONE;
@@ -74,6 +77,10 @@ static uint16_t openPosition = 17967;
 static uint32_t readyForLiftingTimer = 0;
 static uint32_t valueParameter = 0;
 static uint32_t ignoreProtection = 0;
+static uint32_t isVelocityZero = 0;
+
+static int32_t calculateAbsVelocity(uint16_t);
+static bool isStopped(int32_t velocity);
 
 void database_run(void)
 {
@@ -91,6 +98,8 @@ void database_run(void)
             if (fcs == reply.checksum)
             {
                 hookPosition = reply.data.position;
+                hookVelocity = calculateAbsVelocity(hookPosition);
+                isVelocityZero = isStopped(hookVelocity);
                 voltage = reply.data.voltage;
                 current = reply.data.current;
                 database_setError(reply.data.error);
@@ -173,9 +182,41 @@ HookState_e database_getState(void)
     return result;
 }
 
+static int32_t calculateAbsVelocity(uint16_t hookCurrentPosition)
+{
+    int32_t velocity = ((int32_t)hookPreviousPosition - (int32_t)hookCurrentPosition);
+    hookPreviousPosition = hookCurrentPosition;
+    velocity = (velocity > 0) ? velocity : -velocity;
+
+    return velocity;
+}
+
+static bool isStopped(int32_t velocity)
+{
+    bool result = false;
+
+    if (velocity < 25) // Testing value
+    {
+        ++hookVelocityCounter;
+    }
+    else
+    {
+        hookVelocityCounter = 0;
+    }
+    
+    if (hookVelocityCounter > 10) // 10 x 25ms = 250ms
+    {
+        hookVelocityCounter = 10;
+        result = true;
+    }
+    
+
+    return result;
+}
+
 uint8_t database_isAtEndStroke(void)
 {
-    return (((hookPosition & 0x8000U) > 0) && !ignoreProtection);
+    return (((hookPosition & 0x8000U) > 0) && !ignoreProtection && isVelocityZero);
 }
 
 bool database_isPositionEncoderHome(void)
