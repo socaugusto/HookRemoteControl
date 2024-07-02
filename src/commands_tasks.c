@@ -328,21 +328,35 @@ CommandState_e executeEnableRecovery(CommandObject_t *cmdObject)
     {
     case COMMAND_STATE_START:
         mc_setIgnoreSensorParameter(1);
+        LOG_INF("Send ignore end of stroke...");
         cmdObject->state = COMMAND_STATE_SETUP;
 
         break;
     case COMMAND_STATE_SETUP:
-         if (cmdObject->timer > 40)
+        if (cmdObject->timer > 10)
         {
-            mc_setCurrentLimitParameter(database_getCurrentAt(CURRENT_LIMIT_RECOVERY));
-            cmdObject->state = COMMAND_STATE_FINISH;
+            mc_readParameter(PARAMETER_IGNORE_SENSOR);
+            LOG_INF("Request parameter %d", PARAMETER_IGNORE_SENSOR);
+            cmdObject->state = COMMAND_STATE_ACTION;
         }
 
         break;
     case COMMAND_STATE_ACTION:
+        if (cmdObject->timer > 20)
+        {
+            mc_setCurrentLimitParameter(database_getCurrentAt(CURRENT_LIMIT_RECOVERY));
+            LOG_INF("Set limit current to %d", CURRENT_LIMIT_RECOVERY);
+            cmdObject->state = COMMAND_STATE_TEARDOWN;
+        }
 
         break;
     case COMMAND_STATE_TEARDOWN:
+        if (cmdObject->timer > 30)
+        {
+            mc_readParameter(PARAMETER_CURRENT_LIMIT_VALUE);
+            LOG_INF("Request parameter %d", PARAMETER_CURRENT_LIMIT_VALUE);
+            cmdObject->state = COMMAND_STATE_FINISH;
+        }
 
         break;
     case COMMAND_STATE_END:

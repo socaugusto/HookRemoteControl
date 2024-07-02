@@ -72,6 +72,7 @@ static uint16_t midPosition = 13393;
 static uint16_t openPosition = 17967;
 
 static uint32_t readyForLiftingTimer = 0;
+static uint32_t valueParameter = 0;
 static uint32_t ignoreProtection = 0;
 
 void database_run(void)
@@ -109,6 +110,14 @@ void database_run(void)
                 default:
                     id = reply.data.command.dataNumber;
                     memcpy(data, reply.data.dataValues, sizeof(data));
+                    valueParameter = *((uint32_t *)data);
+
+                    if (id)
+                    {
+                        LOG_INF("Read Parameter: %d = %d", id, valueParameter);
+                    }
+                    valueParameter = 0;
+                    id = 0;
 
                     break;
                 }

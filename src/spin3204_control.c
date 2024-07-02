@@ -29,23 +29,6 @@ typedef struct RemoteCommand_t_
 
 } RemoteCommand_t;
 
-typedef enum Parameters_e_
-{
-    PARAMETER_NONE,
-    PARAMETER_KP,
-    PARAMETER_KI,
-    PARAMETER_KD,
-    PARAMETER_PID_SCALING_SHIFT,
-    PARAMETER_PID_OUTPUT_MIN,
-    PARAMETER_PID_OUTPUT_MAX,
-    PARAMETER_CURRENT_LIMIT_VALUE,
-    PARAMETER_CURRENT_LIMIT_TYPE,
-    PARAMETER_CURRENT_LIMIT_ADC_FILTER_VALUE,
-    PARAMETER_CURRENT_PIN_CONFIG,
-    PARAMETER_IGNORE_SENSOR,
-
-} Parameters_e;
-
 static bool sendRemoteRequest(uint8_t *data, uint8_t length);
 
 void mc_moveTo(int16_t target, int16_t speed, uint8_t seqNo)
@@ -118,6 +101,16 @@ void mc_setIgnoreSensorParameter(uint8_t ignore)
     RemoteCommand_t cmd = {.operation = SPIN_COMMAND_SET_PARAMETER,
                            .Parameter1 = PARAMETER_IGNORE_SENSOR,
                            .Parameter2 = ignore,
+                           .Parameter3 = 0};
+
+    sendRemoteRequest((uint8_t *)&cmd, sizeof(RemoteCommand_t));
+}
+
+void mc_readParameter(Parameters_e number)
+{
+    RemoteCommand_t cmd = {.operation = SPIN_COMMAND_READ_PARAMETER,
+                           .Parameter1 = number,
+                           .Parameter2 = 0,
                            .Parameter3 = 0};
 
     sendRemoteRequest((uint8_t *)&cmd, sizeof(RemoteCommand_t));
