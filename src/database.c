@@ -47,7 +47,7 @@ typedef enum MotorDirection_e_
 } MotorDirection_e;
 
 #define HOOK_HOMING_DIRECTION CW
-#define HOOK_CLOSING_DIRECITON CW
+#define HOOK_CLOSING_DIRECTION CW
 #define HOOK_OPENING_DIRECTION CCW
 
 uint16_t hookPosition = INT16_MAX;
@@ -59,17 +59,17 @@ static uint8_t source = 0;
 static uint8_t id;
 static uint8_t data[4];
 
-static int16_t hommingSpeed = HOOK_HOMING_DIRECTION * 750;
-static int16_t closingSpeed = HOOK_CLOSING_DIRECITON * 1200;
-static int16_t openingSpeed = HOOK_OPENING_DIRECTION * 1200;
+static int16_t hommingSpeed = HOOK_HOMING_DIRECTION * 1500;
+static int16_t closingSpeed = HOOK_CLOSING_DIRECTION * 4000;
+static int16_t openingSpeed = HOOK_OPENING_DIRECTION * 2000;
 
 static uint16_t currentLimitOperation = 10000;
 static uint16_t currentLimitRecovery = 5000;
 
 static uint16_t homingPosition = 0;
 static uint16_t closedPosition = 1;
-static uint16_t midPosition = 5000;
-static uint16_t openPosition = 13200;
+static uint16_t midPosition = 13393;
+static uint16_t openPosition = 17967;
 
 static uint32_t readyForLiftingTimer = 0;
 static uint32_t ignoreProtection = 0;
