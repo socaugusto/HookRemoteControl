@@ -76,6 +76,6 @@ uint8_t database_isReadyForLifting(void);
 bool database_ignoreProtection(void);
 void database_advanceProtectionRecovery(void);
 bool database_requestEnableRecovery(void);
-void database_resetIgnoreProtection(void);
+void database_resetPosition(void);
 
 #endif

@@ -7,6 +7,8 @@
 #define LOG_MODULE_NAME cmd_task
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
+static int32_t timeout = 0;
+
 CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
 {
     switch (cmdObject->state)
@@ -32,7 +34,7 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
 
         break;
     case COMMAND_STATE_ACTION:
-        if (database_isAtEndStroke())
+        if (database_isAtEndStroke() && database_isPositionEncoderHome())
         {
             LOG_INF("End of stroke reached");
             mc_setPositionHome();
@@ -55,14 +57,13 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
         }
 
     case COMMAND_STATE_END:
-        if (database_isPositionEncoderHome())
-        {
-            remote_updateHookState(HOOK_STATE_CLOSED);
-            mc_setIgnoreSensorParameter(0);
-            database_resetIgnoreProtection();
-            LOG_INF("Command finished homing successfull");
-            cmdObject->state = COMMAND_STATE_FINISH;
-        }
+        remote_updateHookState(HOOK_STATE_CLOSED);
+        database_resetPosition();
+
+        mc_setIgnoreSensorParameter(0);
+
+        cmdObject->state = COMMAND_STATE_FINISH;
+        LOG_INF("Command finished homing successfull");
 
 
         break;

@@ -203,13 +203,13 @@ static bool isStopped(int32_t velocity)
     {
         hookVelocityCounter = 0;
     }
-    
+
     if (hookVelocityCounter > 10) // 10 x 25ms = 250ms
     {
         hookVelocityCounter = 10;
         result = true;
     }
-    
+
 
     return result;
 }
@@ -249,7 +249,7 @@ void database_advanceProtectionRecovery(void)
     {
         ++ignoreProtection;
     }
-    
+
 }
 
 bool database_requestEnableRecovery(void)
@@ -257,9 +257,10 @@ bool database_requestEnableRecovery(void)
     return (ignoreProtection == 1);
 }
 
-void database_resetIgnoreProtection(void)
+void database_resetPosition(void)
 {
     ignoreProtection = 0;
+    hookPosition = 0;
 }
 
 int16_t database_getHomingSpeed(void)
