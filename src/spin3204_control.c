@@ -127,6 +127,16 @@ void mc_setCurrentLimitParameter(uint16_t value)
     sendRemoteRequest((uint8_t *)&cmd, sizeof(RemoteCommand_t));
 }
 
+void mc_setHardwareCurrentLimiter(bool enable)
+{
+    RemoteCommand_t cmd = {.operation = SPIN_COMMAND_SET_PARAMETER,
+                           .Parameter1 = PARAMETER_CURRENT_LIMIT_TYPE,
+                           .Parameter2 = enable,
+                           .Parameter3 = 0};
+
+    sendRemoteRequest((uint8_t *)&cmd, sizeof(RemoteCommand_t));
+}
+
 static bool sendRemoteRequest(uint8_t *data, uint8_t length)
 {
     if (length > TX_BUFFER_LENGTH)

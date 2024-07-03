@@ -210,11 +210,15 @@ CommandState_e executeCmdClose(CommandObject_t *cmdObject)
     switch (cmdObject->state)
     {
     case COMMAND_STATE_START:
-        mc_setCurrentLimitParameter(database_getCurrentAt(CURRENT_LIMIT_OPERATION));
-        cmdObject->state = COMMAND_STATE_ACTION;
+        mc_setHardwareCurrentLimiter(true);
+        cmdObject->state = COMMAND_STATE_SETUP;
 
         break;
     case COMMAND_STATE_SETUP:
+        if (cmdObject->timer > 20)
+        {
+            cmdObject->state = COMMAND_STATE_ACTION;
+        }
 
         break;
     case COMMAND_STATE_ACTION:
@@ -247,16 +251,21 @@ static CommandState_e executeCmdMid(CommandObject_t *cmdObject, int16_t speed)
     {
     case COMMAND_STATE_START:
         mc_setCurrentLimitParameter(database_getCurrentAt(CURRENT_LIMIT_OPERATION));
-        cmdObject->state = COMMAND_STATE_ACTION;
+        cmdObject->state = COMMAND_STATE_SETUP;
 
         break;
     case COMMAND_STATE_SETUP:
+        mc_setHardwareCurrentLimiter(false);
+        cmdObject->state = COMMAND_STATE_ACTION;
 
         break;
     case COMMAND_STATE_ACTION:
-        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_MID), speed, database_getNextSeqNo());
-        LOG_INF("Send command mid...");
-        cmdObject->state = COMMAND_STATE_END;
+        if (cmdObject->timer > 20)
+        {
+            mc_moveTo(database_convertTargetToValue(HOOK_TARGET_MID), speed, database_getNextSeqNo());
+            LOG_INF("Send command mid...");
+            cmdObject->state = COMMAND_STATE_END;
+        }
 
         break;
     case COMMAND_STATE_TEARDOWN:
@@ -293,15 +302,20 @@ CommandState_e executeCmdOpen(CommandObject_t *cmdObject)
     {
     case COMMAND_STATE_START:
         mc_setCurrentLimitParameter(database_getCurrentAt(CURRENT_LIMIT_OPERATION));
-        cmdObject->state = COMMAND_STATE_ACTION;
+        cmdObject->state = COMMAND_STATE_SETUP;
 
         break;
     case COMMAND_STATE_SETUP:
+        mc_setHardwareCurrentLimiter(false);
+        cmdObject->state = COMMAND_STATE_ACTION;
 
         break;
     case COMMAND_STATE_ACTION:
-        mc_moveTo(database_convertTargetToValue(HOOK_TARGET_OPEN), database_getOpeningSpeed(), database_getNextSeqNo());
-        cmdObject->state = COMMAND_STATE_END;
+        if (cmdObject->timer > 20)
+        {
+            mc_moveTo(database_convertTargetToValue(HOOK_TARGET_OPEN), database_getOpeningSpeed(), database_getNextSeqNo());
+            cmdObject->state = COMMAND_STATE_END;
+        }
 
         break;
     case COMMAND_STATE_TEARDOWN:
