@@ -7,7 +7,7 @@
 #define LOG_MODULE_NAME commands
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
-#define TIMEOUT_COMMAND 800
+#define TIMEOUT_COMMAND 1000
 #define MAX_NUMBER_OF_COMMANDS 8
 static CommandInput_t cmdBuffer[MAX_NUMBER_OF_COMMANDS];
 static int32_t cmdIdxStore = 0; // Head
@@ -132,7 +132,7 @@ static CommandInput_t *process(CommandInput_t *cmd, CommandObject_t *cmdObject)
         result = requestStop();
         LOG_WRN("[ERROR] Timeout, request stop...");
     }
-    else if (database_getError() && (cmdObject->operation != COMMAND_STOP) && (cmdObject->operation != COMMAND_EACK))
+    else if (database_getError() && (cmdObject->operation != COMMAND_STOP) && (cmdObject->operation != COMMAND_EACK) && (cmdObject->operation != COMMAND_HOMING))
     {
         LOG_WRN("[ERROR] Error, request stop...");
         result = requestStop();
