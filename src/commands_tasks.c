@@ -359,8 +359,8 @@ CommandState_e executeEnableRecovery(CommandObject_t *cmdObject)
     case COMMAND_STATE_ACTION:
         if (cmdObject->timer > 20)
         {
-            mc_setCurrentLimitParameter(database_getCurrentAt(CURRENT_LIMIT_RECOVERY));
-            LOG_INF("Set limit current to %d", CURRENT_LIMIT_RECOVERY);
+            mc_setHardwareCurrentLimiter(1);
+            LOG_INF("Set limit current hardware %d", CURRENT_LIMIT_RECOVERY);
             cmdObject->state = COMMAND_STATE_TEARDOWN;
         }
 
@@ -368,8 +368,8 @@ CommandState_e executeEnableRecovery(CommandObject_t *cmdObject)
     case COMMAND_STATE_TEARDOWN:
         if (cmdObject->timer > 30)
         {
-            mc_readParameter(PARAMETER_CURRENT_LIMIT_VALUE);
-            LOG_INF("Request parameter %d", PARAMETER_CURRENT_LIMIT_VALUE);
+            mc_readParameter(PARAMETER_CURRENT_LIMIT_TYPE);
+            LOG_INF("Request parameter %d", PARAMETER_CURRENT_LIMIT_TYPE);
             cmdObject->state = COMMAND_STATE_FINISH;
         }
 
