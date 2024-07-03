@@ -45,7 +45,7 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
             LOG_INF("Overload error detected");
             mc_eack();
             database_eackError();
-            timeout = cmdObject->timer + 10;
+            timeout = cmdObject->timer + 20;
             cmdObject->state = COMMAND_STATE_TEARDOWN;
         }
 
