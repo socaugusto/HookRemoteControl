@@ -44,12 +44,14 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
         {
             LOG_INF("Overload error detected");
             mc_eack();
+            database_eackError();
+            timeout = cmdObject->timer + 10;
             cmdObject->state = COMMAND_STATE_TEARDOWN;
         }
 
         break;
     case COMMAND_STATE_TEARDOWN:
-        if (database_getError() == ERROR_NONE)
+        if (database_getError() == ERROR_NONE && (timeout < cmdObject->timer))
         {
             LOG_INF("Error cleared");
             mc_setPositionHome();
@@ -361,7 +363,7 @@ CommandState_e executeEnableRecovery(CommandObject_t *cmdObject)
         if (cmdObject->timer > 20)
         {
             mc_setHardwareCurrentLimiter(1);
-            LOG_INF("Set limit current hardware %d", CURRENT_LIMIT_RECOVERY);
+            LOG_INF("Set limit current hardware %d", PARAMETER_CURRENT_LIMIT_TYPE);
             cmdObject->state = COMMAND_STATE_TEARDOWN;
         }
 
