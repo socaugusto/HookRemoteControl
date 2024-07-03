@@ -245,6 +245,11 @@ bool database_ignoreProtection(void)
 
 void database_advanceProtectionRecovery(void)
 {
+    if (ignoreProtection == 0)
+    {
+        LOG_INF("Error Protection activated position %d", hookPosition);
+    }
+
     if (ignoreProtection < 2)
     {
         ++ignoreProtection;
