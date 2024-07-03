@@ -56,6 +56,7 @@ CommandState_e executeCmdTaskHoming(CommandObject_t *cmdObject)
             cmdObject->state = COMMAND_STATE_END;
         }
 
+        break;
     case COMMAND_STATE_END:
         remote_updateHookState(HOOK_STATE_CLOSED);
         database_resetPosition();

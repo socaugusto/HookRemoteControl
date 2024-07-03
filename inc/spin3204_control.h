@@ -2,6 +2,7 @@
 #define _MOTOR_CONTROLLER_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef enum Parameters_e_
 {
@@ -29,5 +30,6 @@ void mc_reboot(void);
 void mc_setIgnoreSensorParameter(uint8_t ignore);
 void mc_setCurrentLimitParameter(uint16_t value);
 void mc_readParameter(Parameters_e number);
+void mc_setHardwareCurrentLimiter(bool enable);
 
 #endif
