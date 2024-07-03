@@ -235,6 +235,7 @@ CommandState_e executeCmdClose(CommandObject_t *cmdObject)
     case COMMAND_STATE_END:
         if (database_getState() == HOOK_STATE_CLOSED)
         {
+            database_printHookPosition();
             cmdObject->state = COMMAND_STATE_FINISH;
         }
 
@@ -277,6 +278,7 @@ static CommandState_e executeCmdMid(CommandObject_t *cmdObject, int16_t speed)
     case COMMAND_STATE_END:
         if (database_getState() == HOOK_STATE_MID)
         {
+            database_printHookPosition();
             cmdObject->state = COMMAND_STATE_FINISH;
         }
 
@@ -327,6 +329,7 @@ CommandState_e executeCmdOpen(CommandObject_t *cmdObject)
     case COMMAND_STATE_END:
         if (database_getState() == HOOK_STATE_OPEN)
         {
+            database_printHookPosition();
             cmdObject->state = COMMAND_STATE_FINISH;
         }
 
