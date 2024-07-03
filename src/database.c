@@ -230,7 +230,7 @@ bool database_isProtectionTriggered(void)
     if (database_isAtEndStroke())
     {
         uint16_t encoderValue = hookPosition & 0x7FFF;
-        if (encoderValue > 500) // 500 is a value to test
+        if (encoderValue > 1000) // 1000 is a value to test
         {
             result = true;
         }
