@@ -270,6 +270,7 @@ static void updateButtons(void)
 void remote_updateHookState(HookState_e state)
 {
     hookState = state;
+    database_printHookPosition();
 }
 
 static void stateMachine(void)

@@ -408,3 +408,8 @@ uint8_t database_isReadyForLifting(void)
 
     return result;
 }
+
+void database_printHookPosition(void)
+{
+    LOG_INF("Hook position: %d", hookPosition);
+}
