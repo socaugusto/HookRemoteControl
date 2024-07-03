@@ -226,14 +226,21 @@ CommandState_e executeCmdClose(CommandObject_t *cmdObject)
         break;
     case COMMAND_STATE_ACTION:
         mc_moveTo(database_convertTargetToValue(HOOK_TARGET_CLOSED), database_getClosingSpeed(), database_getNextSeqNo());
-        cmdObject->state = COMMAND_STATE_END;
+        cmdObject->state = COMMAND_STATE_TEARDOWN;
 
         break;
     case COMMAND_STATE_TEARDOWN:
+        if (database_getState() == HOOK_STATE_CLOSED)
+        {
+            mc_setPositionHome();
+            database_resetPosition();
+            cmdObject->state = COMMAND_STATE_END;
+            timeout = cmdObject->timer + 30;
+        }
 
         break;
     case COMMAND_STATE_END:
-        if (database_getState() == HOOK_STATE_CLOSED)
+        if (database_getState() == HOOK_STATE_CLOSED && timeout < cmdObject->timer)
         {
             database_printHookPosition();
             cmdObject->state = COMMAND_STATE_FINISH;
