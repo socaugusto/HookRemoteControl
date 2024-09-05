@@ -367,6 +367,7 @@ uint8_t database_getError(void)
 
 void database_setError(Errors_e error)
 {
+    LOG_INF("Error set to: %d", error);
     if (errorNo == ERROR_NONE)
     {
         errorNo = error;

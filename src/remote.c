@@ -18,6 +18,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define BUTTON_CLOSE_MASK 16
 #define BUTTON_MID_MASK 32
 #define BUTTON_OPEN_MASK 64
+#define BUTTON_MANUAL_SENSOR_OVERRIDE 128
 
 static HookState_e hookState = HOOK_STATE_UNINITIALIZED;
 static HookState_e hookStatePrevious = HOOK_STATE_UNINITIALIZED;
@@ -42,6 +43,7 @@ static uint32_t closeButton = 0;
 static uint32_t midButton = 0;
 static uint32_t openButton = 0;
 static uint32_t parameterButton = 0;
+static uint32_t sensorOverrideCombo = 0;
 static int32_t rssiValue = 0;
 
 static void updateButtons(void);
@@ -107,6 +109,13 @@ void remote_updateButtons(uint32_t button_state, uint32_t has_changed)
                 LOG_INF("Execute button %d", buttonsExecute);
             }
             parameterButton = 0;
+
+            if (sensorOverrideCombo > BUTTON_EXECUTE_THRESHOLD)
+            {
+                buttonsExecute |= BUTTON_MANUAL_SENSOR_OVERRIDE;
+                LOG_INF("Execute button %d", buttonsExecute);
+            }
+            sensorOverrideCombo = 0;
         }
     }
 }
@@ -264,7 +273,25 @@ static void updateButtons(void)
     if (buttonsPressed & BUTTON_PARAMETER_MASK)
     {
         ++parameterButton;
+
+        closeButton = 0;
+        midButton = 0;
+        openButton = 0;
     }
+    if (buttonsPressed == (BUTTON_PARAMETER_MASK | BUTTON_CLOSE_MASK))
+    {
+        ++sensorOverrideCombo;
+
+        closeButton = 0;
+        midButton = 0;
+        openButton = 0;
+        parameterButton = 0;
+    }
+}
+
+static bool requestSensorOverride(void)
+{
+    return (buttonsExecute & BUTTON_MANUAL_SENSOR_OVERRIDE);
 }
 
 void remote_updateHookState(HookState_e state)
@@ -279,11 +306,12 @@ static void stateMachine(void)
     {
         hookState = database_getError() ? HOOK_STATE_ERROR : database_getState();
 
-        if (database_isProtectionTriggered() && !database_ignoreProtection())
+        if ((database_isProtectionTriggered() || requestSensorOverride()) && !database_ignoreProtection())
         {
             database_setError(ERROR_PROTECTION_ACTIVATED);
             hookState = HOOK_STATE_ERROR;
             database_advanceProtectionRecovery();
+            buttonsExecute = 0;
             LOG_INF("Error Protection Activated...");
         }
     }
