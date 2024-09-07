@@ -71,8 +71,8 @@ static uint16_t currentLimitRecovery = 5000;
 
 static uint16_t homingPosition = 0;
 static uint16_t closedPosition = 1;
-static uint16_t midPosition = 13393;
-static uint16_t openPosition = 17967;
+static uint16_t midPosition = 15027;
+static uint16_t openPosition = 18293;
 
 static uint32_t readyForLiftingTimer = 0;
 static uint32_t valueParameter = 0;
