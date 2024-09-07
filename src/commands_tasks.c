@@ -159,11 +159,20 @@ CommandState_e executeCmdTaskStop(CommandObject_t *cmdObject)
         break;
     case COMMAND_STATE_ACTION:
         mc_stop();
+        timeout = cmdObject->timer + 10;
         LOG_INF("Sent stop request...");
-        cmdObject->state = COMMAND_STATE_FINISH;
+        cmdObject->state = COMMAND_STATE_TEARDOWN;
 
         break;
     case COMMAND_STATE_TEARDOWN:
+        if (database_isStopped())
+        {
+            cmdObject->state = COMMAND_STATE_FINISH;
+        }
+        else if (timeout < cmdObject->timer)
+        {
+            cmdObject->state = COMMAND_STATE_ACTION;
+        }
 
         break;
     case COMMAND_STATE_END:
@@ -283,6 +292,7 @@ static CommandState_e executeCmdMid(CommandObject_t *cmdObject, int16_t speed)
             mc_moveTo(database_convertTargetToValue(HOOK_TARGET_MID), speed, database_getNextSeqNo());
             LOG_INF("Send command mid...");
             cmdObject->state = COMMAND_STATE_END;
+            timeout = cmdObject->timer + 100;
         }
 
         break;
@@ -294,6 +304,14 @@ static CommandState_e executeCmdMid(CommandObject_t *cmdObject, int16_t speed)
         {
             database_printHookPosition();
             cmdObject->state = COMMAND_STATE_FINISH;
+        }
+        else if (timeout < cmdObject->timer)
+        {
+            timeout = cmdObject->timer + 100;
+            if (database_isStopped())
+            {
+                database_setError(ERROR_MOTOR_JAMMED);
+            }
         }
 
         break;
@@ -334,6 +352,7 @@ CommandState_e executeCmdOpen(CommandObject_t *cmdObject)
         {
             mc_moveTo(database_convertTargetToValue(HOOK_TARGET_OPEN), database_getOpeningSpeed(), database_getNextSeqNo());
             cmdObject->state = COMMAND_STATE_END;
+            timeout = cmdObject->timer + 100;
         }
 
         break;
@@ -345,6 +364,14 @@ CommandState_e executeCmdOpen(CommandObject_t *cmdObject)
         {
             database_printHookPosition();
             cmdObject->state = COMMAND_STATE_FINISH;
+        }
+        else if (timeout < cmdObject->timer)
+        {
+            timeout = cmdObject->timer + 100;
+            if (database_isStopped())
+            {
+                database_setError(ERROR_MOTOR_JAMMED);
+            }
         }
 
         break;
@@ -379,7 +406,7 @@ CommandState_e executeEnableRecovery(CommandObject_t *cmdObject)
     case COMMAND_STATE_ACTION:
         if (cmdObject->timer > 20)
         {
-            mc_setHardwareCurrentLimiter(1);
+            mc_setHardwareCurrentLimiter(true);
             LOG_INF("Set limit current hardware %d", PARAMETER_CURRENT_LIMIT_TYPE);
             cmdObject->state = COMMAND_STATE_TEARDOWN;
         }

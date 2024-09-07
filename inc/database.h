@@ -33,6 +33,7 @@ typedef enum Errors_e_
     ERROR_INVALID_SEQUENCE_NUMBER,
     ERROR_ESTOP,
     ERROR_PROTECTION_ACTIVATED,
+    ERROR_MOTOR_JAMMED,
 
 } Errors_e;
 
@@ -78,5 +79,6 @@ void database_advanceProtectionRecovery(void);
 bool database_requestEnableRecovery(void);
 void database_resetPosition(void);
 void database_printHookPosition(void);
+bool database_isStopped(void);
 
 #endif
