@@ -214,6 +214,11 @@ static bool isStopped(int32_t velocity)
     return result;
 }
 
+bool database_isStopped(void)
+{
+    return isVelocityZero;
+}
+
 uint8_t database_isAtEndStroke(void)
 {
     return (((hookPosition & 0x8000U) > 0) && !ignoreProtection && isVelocityZero);
