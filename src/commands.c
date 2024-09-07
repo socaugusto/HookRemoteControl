@@ -132,7 +132,7 @@ static CommandInput_t *process(CommandInput_t *cmd, CommandObject_t *cmdObject)
         result = requestStop();
         LOG_WRN("[ERROR] Timeout, request stop...");
     }
-    else if (database_getError() && (cmdObject->operation != COMMAND_STOP) && (cmdObject->operation != COMMAND_EACK) && (cmdObject->operation != COMMAND_HOMING))
+    else if (database_getError() && (cmdObject->operation != COMMAND_STOP) && (cmdObject->operation != COMMAND_EACK))
     {
         LOG_WRN("[ERROR] Error, request stop...");
         result = requestStop();
