@@ -56,6 +56,7 @@ static uint16_t hookPreviousPosition = INT16_MAX;
 static uint16_t hookPosition = INT16_MAX;
 static uint16_t voltage = 0;
 static int16_t current = 0;
+static Errors_e previousErrorNo = ERROR_NONE;
 static Errors_e errorNo = ERROR_NONE;
 static uint8_t sequenceNumber = 0;
 static uint8_t source = 0;
@@ -372,6 +373,12 @@ uint8_t database_getError(void)
 
 void database_setError(Errors_e error)
 {
+    if (previousErrorNo != error)
+    {
+        previousErrorNo = error;
+        LOG_INF("Error set to: %d", error);
+    }
+
     if (errorNo == ERROR_NONE)
     {
         errorNo = error;
