@@ -395,7 +395,7 @@ CommandState_e executeEnableRecovery(CommandObject_t *cmdObject)
 
         break;
     case COMMAND_STATE_SETUP:
-        if (cmdObject->timer > 10)
+        if (cmdObject->timer > 20)
         {
             mc_readParameter(PARAMETER_IGNORE_SENSOR);
             LOG_INF("Request parameter %d", PARAMETER_IGNORE_SENSOR);
@@ -404,7 +404,7 @@ CommandState_e executeEnableRecovery(CommandObject_t *cmdObject)
 
         break;
     case COMMAND_STATE_ACTION:
-        if (cmdObject->timer > 20)
+        if (cmdObject->timer > 40)
         {
             mc_setHardwareCurrentLimiter(true);
             LOG_INF("Set limit current hardware %d", PARAMETER_CURRENT_LIMIT_TYPE);
@@ -413,7 +413,7 @@ CommandState_e executeEnableRecovery(CommandObject_t *cmdObject)
 
         break;
     case COMMAND_STATE_TEARDOWN:
-        if (cmdObject->timer > 30)
+        if (cmdObject->timer > 60)
         {
             mc_readParameter(PARAMETER_CURRENT_LIMIT_TYPE);
             LOG_INF("Request parameter %d", PARAMETER_CURRENT_LIMIT_TYPE);
