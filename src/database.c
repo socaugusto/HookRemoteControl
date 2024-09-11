@@ -77,7 +77,6 @@ static uint16_t openPosition = 18293;
 
 static uint32_t readyForLiftingTimer = 0;
 static uint32_t valueParameter = 0;
-static uint32_t ignoreProtection = 0;
 static uint32_t isVelocityZero = 0;
 
 static int32_t calculateAbsVelocity(uint16_t);
@@ -222,7 +221,7 @@ bool database_isStopped(void)
 
 uint8_t database_isAtEndStroke(void)
 {
-    return (((hookPosition & 0x8000U) > 0) && !ignoreProtection && isVelocityZero);
+    return (((hookPosition & 0x8000U) > 0) && isVelocityZero);
 }
 
 bool database_isPositionEncoderHome(void)
@@ -244,33 +243,8 @@ bool database_isProtectionTriggered(void)
     return result;
 }
 
-bool database_ignoreProtection(void)
-{
-    return ignoreProtection;
-}
-
-void database_advanceProtectionRecovery(void)
-{
-    if (ignoreProtection == 0)
-    {
-        LOG_INF("Error Protection activated position %d", hookPosition);
-    }
-
-    if (ignoreProtection < 2)
-    {
-        ++ignoreProtection;
-    }
-
-}
-
-bool database_requestEnableRecovery(void)
-{
-    return (ignoreProtection == 1);
-}
-
 void database_resetPosition(void)
 {
-    ignoreProtection = 0;
     hookPosition = 0;
 }
 

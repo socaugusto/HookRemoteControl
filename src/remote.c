@@ -279,11 +279,10 @@ static void stateMachine(void)
     {
         hookState = database_getError() ? HOOK_STATE_ERROR : database_getState();
 
-        if (database_isProtectionTriggered() && !database_ignoreProtection())
+        if (database_isProtectionTriggered())
         {
             database_setError(ERROR_PROTECTION_ACTIVATED);
             hookState = HOOK_STATE_ERROR;
-            database_advanceProtectionRecovery();
             LOG_INF("Error Protection Activated...");
         }
     }
@@ -396,16 +395,6 @@ static void stateMachine(void)
             CommandInput_t cmd = {.operation = COMMAND_EACK};
             command_addToBuffer(&cmd);
             LOG_INF("Executing eack...");
-
-            if (database_requestEnableRecovery())
-            {
-                cmd.operation = COMMAND_ENABLE_RECOVERY;
-                cmd.parameter1 = 1;
-                command_addToBuffer(&cmd);
-                LOG_INF("Enabling recovery...");
-
-                database_advanceProtectionRecovery();
-            }
         }
         else if (command_isInExecution())
         {

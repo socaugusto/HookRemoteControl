@@ -74,9 +74,6 @@ void database_setError(Errors_e error);
 void database_eackError(void);
 uint8_t database_isReadyForLifting(void);
 
-bool database_ignoreProtection(void);
-void database_advanceProtectionRecovery(void);
-bool database_requestEnableRecovery(void);
 void database_resetPosition(void);
 void database_printHookPosition(void);
 bool database_isStopped(void);

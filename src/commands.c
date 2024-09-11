@@ -103,11 +103,6 @@ void command_run(void)
             cmdObject.task = executeCmdMidOpen;
 
             break;
-        case COMMAND_ENABLE_RECOVERY:
-            cmdObject.operation = cmd->operation;
-            cmdObject.task = executeEnableRecovery;
-
-            break;
         default:
 
             break;
