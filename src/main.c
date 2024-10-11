@@ -792,13 +792,13 @@ static void ble_write_thread(void)
 void ble_rssi_thread(void)
 {
 	uint16_t conn_handle = 0;
-	bt_hci_get_conn_handle(default_conn, &conn_handle);
-	sdc_hci_cmd_sp_read_rssi_t p_param = {conn_handle};
 
 	while (1)
 	{
 		k_sem_take(&rssi_sem, K_FOREVER);
 		k_sleep(K_MSEC(2000));
+		bt_hci_get_conn_handle(default_conn, &conn_handle);
+		sdc_hci_cmd_sp_read_rssi_t p_param = {conn_handle};
 
 		for (;;)
 		{
