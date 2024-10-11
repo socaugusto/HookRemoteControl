@@ -10,21 +10,12 @@
 
 // For more help, browse the DeviceTree documentation at https: //docs.zephyrproject.org/latest/guides/dts/index.html
 // You can also visit the nRF DeviceTree extension documentation at https: //nrfconnect.github.io/vscode-nrf-connect/devicetree/nrfdevicetree.html
-&arduino_header {
-    status = "disabled";
-};
-
 &arduino_i2c {
     status = "disabled";
 };
 
-&spi1 {
-    status = "disabled";
-};
-
-lcd_spi: &spi3 {
+lcd_spi: &spi1 {
     status = "okay";
-    /delete-property/ cs-gpios;
 };
 
 
@@ -52,19 +43,9 @@ lcd_spi: &spi3 {
             zephyr,code = <INPUT_KEY_3>;
         };
         button4: button_4 {
-            gpios = <&gpio0 27 (GPIO_ACTIVE_LOW)>;
+            gpios = <&gpio1 0 (GPIO_ACTIVE_LOW)>;
             label = "Push button switch 4";
             zephyr,code = <INPUT_KEY_4>;
-        };
-        button5: button_5 {
-            gpios = <&gpio0 26 (GPIO_ACTIVE_LOW)>;
-            label = "Push button switch 5";
-            zephyr,code = <INPUT_KEY_5>;
-        };
-        button6: button_6 {
-            gpios = <&gpio1 8 (GPIO_ACTIVE_LOW)>;
-            label = "Push button switch 6";
-            zephyr,code = <INPUT_KEY_6>;
         };
     };
 
@@ -87,15 +68,15 @@ lcd_spi: &spi3 {
             label = "Green LED 3";
         };
         led4: led_4 {
-            gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
             label = "Green LED 4";
         };
         led5: led_5 {
-            gpios = <&gpio1 5 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
             label = "Green LED 5";
         };
         led6: led_6 {
-            gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>;
             label = "Green LED 6";
         };
         led7: led_7 {
@@ -107,7 +88,7 @@ lcd_spi: &spi3 {
             label = "Red LED 8";
         };
         led9: led_9 {
-            gpios = <&gpio1 11 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio0 28 GPIO_ACTIVE_HIGH>;
             label = "Yellow LED 9";
         };
     };
@@ -115,9 +96,13 @@ lcd_spi: &spi3 {
     spi_cs {
         compatible = "gpio-leds";
         lcdcs: lcd_cs {
-            gpios = <&gpio1 12 GPIO_ACTIVE_LOW>;
+            gpios = <&gpio0 29 GPIO_ACTIVE_LOW>;
             label = "LCD chip select";
         };
     };
 };
 
+
+&radio {
+    fem = <&nrf_radio_fem>;
+};
