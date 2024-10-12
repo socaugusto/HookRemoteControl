@@ -492,12 +492,38 @@ static void scan_filter_match(struct bt_scan_device_info *device_info,
 							  struct bt_scan_filter_match *filter_match,
 							  bool connectable)
 {
+	int err;
 	char addr[BT_ADDR_LE_STR_LEN];
+	struct bt_conn_le_create_param *conn_params;
 
 	bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
 
 	LOG_INF("Filters matched. Address: %s connectable: %d",
 			addr, connectable);
+
+	err = bt_scan_stop();
+	if (err)
+	{
+		LOG_INF("Stop LE scan failed (err %d)", err);
+	}
+	conn_params = BT_CONN_LE_CREATE_PARAM(
+		BT_CONN_LE_OPT_CODED | BT_CONN_LE_OPT_NO_1M,
+		BT_GAP_SCAN_FAST_INTERVAL,
+		BT_GAP_SCAN_FAST_INTERVAL);
+	err = bt_conn_le_create(device_info->recv_info->addr, conn_params,
+							BT_LE_CONN_PARAM_DEFAULT,
+							&default_conn);
+	if (err)
+	{
+		LOG_INF("Create conn failed (err %d)", err);
+		err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
+		if (err)
+		{
+			LOG_INF("Scanning failed to start (err %d)", err);
+			return;
+		}
+	}
+	LOG_INF("Connection pending");
 }
 
 static void scan_connecting_error(struct bt_scan_device_info *device_info)
@@ -537,9 +563,18 @@ BT_SCAN_CB_INIT(scan_cb, scan_filter_match, NULL,
 static int scan_init(void)
 {
 	int err;
+	/* Use active scanning and disable duplicate filtering to handle any
+	 * devices that might update their advertising data at runtime. */
+	struct bt_le_scan_param scan_param = {
+		.type = BT_LE_SCAN_TYPE_ACTIVE,
+		.interval = BT_GAP_SCAN_FAST_INTERVAL,
+		.window = BT_GAP_SCAN_FAST_WINDOW,
+		.options = BT_LE_SCAN_OPT_CODED | BT_LE_SCAN_OPT_NO_1M};
+
 	struct bt_scan_init_param scan_init = {
 		.connect_if_match = 1,
-	};
+		.scan_param = &scan_param,
+		.conn_param = NULL};
 
 	bt_scan_init(&scan_init);
 	bt_scan_cb_register(&scan_cb);
@@ -635,6 +670,9 @@ static int configure_spi(void)
 	return 0;
 }
 
+#define FEM_NRF_NODE DT_NODELABEL(nrf_radio_fem)
+static const struct gpio_dt_spec antenna_sel = GPIO_DT_SPEC_GET(FEM_NRF_NODE, ant_sel_gpios);
+
 int main(void)
 {
 	int err;
@@ -676,6 +714,9 @@ int main(void)
 		LOG_ERR("uart_init failed (err %d)", err);
 		return 0;
 	}
+
+	// Select Antenna 2
+	gpio_pin_set_dt(&antenna_sel, 1);
 
 	err = scan_init();
 	if (err != 0)
