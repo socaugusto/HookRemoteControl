@@ -69,26 +69,26 @@ lcd_spi: &spi1 {
         };
         led4: led_4 {
             gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
-            label = "Green LED 4";
+            label = "Open Led";
         };
         led5: led_5 {
-            gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
-            label = "Green LED 5";
+            gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>;
+            label = "Mid Led";
         };
         led6: led_6 {
-            gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>;
-            label = "Green LED 6";
+            gpios = <&gpio0 27 GPIO_ACTIVE_HIGH>;
+            label = "Close Led";
         };
         led7: led_7 {
             gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
-            label = "Yellow LED 7";
+            label = "BLE Connected";
         };
         led8: led_8 {
-            gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>;
-            label = "Red LED 8";
+            gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+            label = "Fault Led";
         };
         led9: led_9 {
-            gpios = <&gpio0 28 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio1 2 GPIO_ACTIVE_HIGH>;
             label = "Yellow LED 9";
         };
     };
